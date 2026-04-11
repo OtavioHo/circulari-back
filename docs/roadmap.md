@@ -1,8 +1,8 @@
 # Roadmap
 
-## Milestone 1 — Auth + Backend Structure <Badge type="danger" text="Not Implemented" />
+## Milestone 1 — Auth + Backend Structure <Badge type="warning" text="In Progress" />
 
-- [ ] NestJS project setup
+- [x] NestJS project setup
 - [ ] PostgreSQL connection + migrations
 - [ ] `POST /auth/register`
 - [ ] `POST /auth/login`
