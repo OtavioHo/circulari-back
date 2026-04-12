@@ -6,9 +6,12 @@
 |-------|------|-------|
 | id | uuid | PK |
 | email | string | unique |
-| password_hash | string | bcrypt |
+| password_hash | string | bcrypt, nullable (social-only users) |
 | name | string | |
 | photo_url | string | nullable |
+| oauth_provider | string | nullable, e.g. "google", "apple" |
+| oauth_id | string | nullable, provider-specific user ID |
+| refresh_token_hash | string | nullable, bcrypt hash of current refresh token |
 | created_at | timestamp | |
 
 ## List

@@ -22,7 +22,10 @@ Recommended: `docker-compose.yml` with services for `api`, `postgres`, `nginx`.
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret for signing JWT tokens |
+| `JWT_SECRET` | Secret for signing access tokens |
+| `JWT_EXPIRES_IN` | Access token expiry (default: `15m`) |
+| `JWT_REFRESH_SECRET` | Secret for signing refresh tokens |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry (default: `7d`) |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `STORAGE_PROVIDER` | `s3` or `r2` |
 | `STORAGE_BUCKET` | Bucket name |

@@ -3,11 +3,11 @@
 ## Milestone 1 — Auth + Backend Structure <Badge type="warning" text="In Progress" />
 
 - [x] NestJS project setup
-- [ ] PostgreSQL connection + migrations
-- [ ] `POST /auth/register`
-- [ ] `POST /auth/login`
+- [x] PostgreSQL connection + migrations
+- [x] `POST /auth/register`
+- [x] `POST /auth/login`
 - [ ] `POST /auth/social` (Google + Apple)
-- [ ] JWT middleware
+- [x] JWT middleware
 
 ## Milestone 2 — Lists + Items CRUD <Badge type="danger" text="Not Implemented" />
 
