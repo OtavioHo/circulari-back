@@ -7,6 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import type { StringValue } from 'ms';
+import { Prisma } from '../../generated/prisma/client';
 import { AuthRepository } from './auth.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -26,11 +28,19 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.repository.create({
-      email: dto.email,
-      name: dto.name,
-      password_hash: passwordHash,
-    });
+    let user: Awaited<ReturnType<typeof this.repository.create>>;
+    try {
+      user = await this.repository.create({
+        email: dto.email,
+        name: dto.name,
+        password_hash: passwordHash,
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Email already in use');
+      }
+      throw err;
+    }
 
     const tokens = await this.signTokens(user.id, user.email);
     await this.storeRefreshHash(user.id, tokens.refreshToken);
@@ -86,12 +96,11 @@ export class AuthService {
     const [token, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.config.getOrThrow<string>('JWT_SECRET'),
-        // expiresIn expects StringValue from ms — string is compatible at runtime
-        expiresIn: this.config.get('JWT_EXPIRES_IN', '15m') as any,
+        expiresIn: this.config.get('JWT_EXPIRES_IN', '15m') as StringValue,
       }),
       this.jwtService.signAsync(payload, {
         secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d') as any,
+        expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d') as StringValue,
       }),
     ]);
 
