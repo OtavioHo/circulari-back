@@ -8,6 +8,7 @@ import { AuthRepository } from './auth.repository';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Module({
   imports: [PassportModule, JwtModule.register({})],
@@ -17,6 +18,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     AuthRepository,
     JwtStrategy,
     JwtRefreshStrategy,
+    JwtRefreshGuard,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
