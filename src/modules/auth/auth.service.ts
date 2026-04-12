@@ -71,17 +71,22 @@ export class AuthService {
 
   async refresh(userId: string, refreshToken: string) {
     const user = await this.repository.findById(userId);
-    if (!user || !user.refresh_token_hash) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    const tokenValid = await bcrypt.compare(refreshToken, user.refresh_token_hash);
-    if (!tokenValid) {
+    if (!user) {
       throw new ForbiddenException('Access denied');
     }
 
     const tokens = await this.signTokens(user.id, user.email);
-    await this.storeRefreshHash(user.id, tokens.refreshToken);
+    const newHash = await bcrypt.hash(tokens.refreshToken, 10);
+
+    const rotated = await this.repository.verifyAndRotateRefreshToken(
+      userId,
+      (hash) => bcrypt.compare(refreshToken, hash),
+      newHash,
+    );
+
+    if (!rotated) {
+      throw new ForbiddenException('Access denied');
+    }
 
     return tokens;
   }

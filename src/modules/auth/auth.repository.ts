@@ -23,4 +23,34 @@ export class AuthRepository {
       data: { refresh_token_hash: hash },
     });
   }
+
+  /**
+   * Atomically verifies the current refresh token hash and, if valid, replaces it
+   * with a new hash. Uses SELECT FOR UPDATE to lock the row so concurrent requests
+   * with the same old token cannot both succeed.
+   *
+   * @returns true if the token was valid and the hash was rotated, false otherwise.
+   */
+  async verifyAndRotateRefreshToken(
+    userId: string,
+    verify: (hash: string) => Promise<boolean>,
+    newHash: string,
+  ): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ refresh_token_hash: string | null }>>`
+        SELECT refresh_token_hash FROM users WHERE id = ${userId}::uuid FOR UPDATE
+      `;
+      const row = rows[0];
+      if (!row?.refresh_token_hash) return false;
+
+      const valid = await verify(row.refresh_token_hash);
+      if (!valid) return false;
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { refresh_token_hash: newHash },
+      });
+      return true;
+    });
+  }
 }

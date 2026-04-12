@@ -21,6 +21,7 @@ describe('AuthService', () => {
             findById: jest.fn(),
             create: jest.fn(),
             updateRefreshTokenHash: jest.fn(),
+            verifyAndRotateRefreshToken: jest.fn(),
           },
         },
         {
@@ -151,60 +152,41 @@ describe('AuthService', () => {
   });
 
   describe('refresh', () => {
-    it('should rotate tokens for valid refresh token', async () => {
-      const refreshToken = 'valid-refresh-token';
-      const hash = await bcrypt.hash(refreshToken, 10);
-      repository.findById.mockResolvedValue({
-        id: 'uuid-1',
-        email: 'test@example.com',
-        name: 'Test',
-        password_hash: 'hashed',
-        photo_url: null,
-        oauth_provider: null,
-        oauth_id: null,
-        refresh_token_hash: hash,
-        created_at: new Date(),
-      });
-      repository.updateRefreshTokenHash.mockResolvedValue(undefined as any);
+    const baseUser = {
+      id: 'uuid-1',
+      email: 'test@example.com',
+      name: 'Test',
+      password_hash: 'hashed',
+      photo_url: null,
+      oauth_provider: null,
+      oauth_id: null,
+      refresh_token_hash: 'some-hash',
+      created_at: new Date(),
+    };
 
-      const result = await service.refresh('uuid-1', refreshToken);
+    it('should rotate tokens for valid refresh token', async () => {
+      repository.findById.mockResolvedValue(baseUser);
+      repository.verifyAndRotateRefreshToken.mockResolvedValue(true);
+
+      const result = await service.refresh('uuid-1', 'valid-refresh-token');
 
       expect(result.token).toBe('signed-token');
       expect(result.refreshToken).toBe('signed-token');
-      expect(repository.updateRefreshTokenHash).toHaveBeenCalled();
+      expect(repository.verifyAndRotateRefreshToken).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException for tampered refresh token', async () => {
-      const hash = await bcrypt.hash('original-token', 10);
-      repository.findById.mockResolvedValue({
-        id: 'uuid-1',
-        email: 'test@example.com',
-        name: 'Test',
-        password_hash: 'hashed',
-        photo_url: null,
-        oauth_provider: null,
-        oauth_id: null,
-        refresh_token_hash: hash,
-        created_at: new Date(),
-      });
+    it('should throw ForbiddenException when token is invalid or already rotated', async () => {
+      repository.findById.mockResolvedValue(baseUser);
+      repository.verifyAndRotateRefreshToken.mockResolvedValue(false);
 
       await expect(service.refresh('uuid-1', 'tampered-token')).rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw ForbiddenException when user has no stored refresh hash', async () => {
-      repository.findById.mockResolvedValue({
-        id: 'uuid-1',
-        email: 'test@example.com',
-        name: 'Test',
-        password_hash: 'hashed',
-        photo_url: null,
-        oauth_provider: null,
-        oauth_id: null,
-        refresh_token_hash: null,
-        created_at: new Date(),
-      });
+    it('should throw ForbiddenException when user does not exist', async () => {
+      repository.findById.mockResolvedValue(null);
 
       await expect(service.refresh('uuid-1', 'some-token')).rejects.toThrow(ForbiddenException);
+      expect(repository.verifyAndRotateRefreshToken).not.toHaveBeenCalled();
     });
   });
 
