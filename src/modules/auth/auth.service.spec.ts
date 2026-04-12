@@ -32,13 +32,21 @@ describe('AuthService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn((key: string) => {
+            get: jest.fn((key: string, defaultValue?: string) => {
               const map: Record<string, string> = {
                 JWT_SECRET: 'test-secret',
                 JWT_EXPIRES_IN: '15m',
                 JWT_REFRESH_SECRET: 'test-refresh-secret',
                 JWT_REFRESH_EXPIRES_IN: '7d',
               };
+              return map[key] ?? defaultValue;
+            }),
+            getOrThrow: jest.fn((key: string) => {
+              const map: Record<string, string> = {
+                JWT_SECRET: 'test-secret',
+                JWT_REFRESH_SECRET: 'test-refresh-secret',
+              };
+              if (!map[key]) throw new Error(`Config key "${key}" not found`);
               return map[key];
             }),
           },
