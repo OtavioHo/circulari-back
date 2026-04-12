@@ -1,7 +1,7 @@
 # API
 
 Base URL: `/api/v1`
-Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/*`
+Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/*` and `/health`
 
 ---
 
