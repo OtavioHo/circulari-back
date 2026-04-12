@@ -1,30 +1,41 @@
 # API
 
 Base URL: `/api/v1`
-Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/*`
+Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/register`, `/auth/login`, `/auth/refresh`, and `/health`
 
 ---
 
-## Auth <Badge type="danger" text="Not Implemented" />
+## Auth <Badge type="warning" text="In Progress" />
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | /auth/register | Email + password registration |
-| POST | /auth/login | Returns JWT |
-| POST | /auth/social | Google / Apple OAuth |
+| POST | /auth/login | Returns JWT + refresh token |
+| POST | /auth/refresh | Exchange refresh token for new token pair |
+| POST | /auth/logout | Invalidate refresh token |
+| POST | /auth/social | Google / Apple OAuth (not yet implemented) |
 
 ```json
 // POST /auth/register — request
 { "email": "string", "password": "string", "name": "string" }
 
 // POST /auth/register — response 201
-{ "token": "string", "user": { "id": "uuid", "email": "string", "name": "string" } }
+{ "token": "string", "refreshToken": "string", "user": { "id": "uuid", "email": "string", "name": "string" } }
 
 // POST /auth/login — request
 { "email": "string", "password": "string" }
 
 // POST /auth/login — response 200
-{ "token": "string" }
+{ "token": "string", "refreshToken": "string" }
+
+// POST /auth/refresh — request
+{ "refreshToken": "string" }
+
+// POST /auth/refresh — response 200
+{ "token": "string", "refreshToken": "string" }
+
+// POST /auth/logout — response 200 (requires Authorization header)
+{ "message": "Logged out" }
 ```
 
 ---

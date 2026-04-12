@@ -22,7 +22,7 @@ hero:
 
 | Feature | Status |
 |---------|--------|
-| Auth (email + social) | <Badge type="danger" text="Not Implemented" /> |
+| Auth (email + social) | <Badge type="warning" text="In Progress" /> |
 | Lists CRUD | <Badge type="danger" text="Not Implemented" /> |
 | Items CRUD | <Badge type="danger" text="Not Implemented" /> |
 | Image upload + storage | <Badge type="danger" text="Not Implemented" /> |
