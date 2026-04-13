@@ -134,7 +134,8 @@ describe('ItemsService', () => {
   });
 
   describe('search', () => {
-    it('delegates to repository with userId and query', async () => {
+    it('delegates to repository with userId and query and returns mapped response', async () => {
+      const createdAt = new Date();
       const items = [
         {
           id: 'item-1',
@@ -144,7 +145,7 @@ describe('ItemsService', () => {
           quantity: 1,
           location_id: null,
           user_defined_value: null,
-          created_at: new Date(),
+          created_at: createdAt,
         },
       ];
       itemsRepository.searchByUser.mockResolvedValue(items);
@@ -152,7 +153,37 @@ describe('ItemsService', () => {
       const result = await service.search('user-1', 'lamp');
 
       expect(itemsRepository.searchByUser).toHaveBeenCalledWith('user-1', 'lamp');
-      expect(result).toBe(items);
+      expect(result).toEqual([
+        {
+          id: 'item-1',
+          name: 'vintage lamp',
+          description: null,
+          quantity: 1,
+          user_defined_value: null,
+          images: [],
+          created_at: createdAt,
+        },
+      ]);
+    });
+
+    it('converts user_defined_value Decimal to number in search results', async () => {
+      const createdAt = new Date();
+      itemsRepository.searchByUser.mockResolvedValue([
+        {
+          id: 'item-1',
+          list_id: 'list-1',
+          name: 'lamp',
+          description: null,
+          quantity: 1,
+          location_id: null,
+          user_defined_value: { valueOf: () => 5.5 } as any,
+          created_at: createdAt,
+        },
+      ]);
+
+      const result = await service.search('user-1', 'lamp');
+
+      expect(result[0].user_defined_value).toBe(5.5);
     });
 
     it('returns empty array when no items match', async () => {
