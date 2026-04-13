@@ -38,7 +38,7 @@ export class AuthRepository {
   ): Promise<boolean> {
     return this.prisma.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<Array<{ refresh_token_hash: string | null }>>`
-        SELECT refresh_token_hash FROM users WHERE id = ${userId}::uuid FOR UPDATE
+        SELECT refresh_token_hash FROM users WHERE id = CAST(${userId} AS uuid) FOR UPDATE
       `;
       const row = rows[0];
       if (!row?.refresh_token_hash) return false;
