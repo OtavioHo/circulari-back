@@ -11,6 +11,7 @@ export class LocationsRepository {
         user_id: userId,
         ...(query ? { name: { contains: query, mode: 'insensitive' } } : {}),
       },
+      select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
   }
@@ -18,6 +19,7 @@ export class LocationsRepository {
   create(userId: string, name: string) {
     return this.prisma.location.create({
       data: { user_id: userId, name },
+      select: { id: true, name: true },
     });
   }
 
