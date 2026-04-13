@@ -36,10 +36,6 @@ export class ListsRepository {
     });
   }
 
-  findOneByUser(id: string, userId: string) {
-    return this.prisma.list.findFirst({ where: { id, user_id: userId } });
-  }
-
   async update(id: string, userId: string, name: string) {
     const result = await this.prisma.list.updateMany({
       where: { id, user_id: userId },
