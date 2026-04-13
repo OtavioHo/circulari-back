@@ -16,9 +16,9 @@
 - [x] Locations endpoints
 - [x] Global item search (`GET /items?search=`)
 
-## Milestone 3 — Image Upload + Storage <Badge type="danger" text="Not Implemented" />
+## Milestone 3 — Image Upload + Storage <Badge type="warning" text="In Progress" />
 
-- [ ] S3-compatible storage abstraction
+- [x] S3-compatible storage abstraction
 - [ ] Image upload to S3/R2 on `POST /items`
 - [ ] `ItemImage` DB record created with returned URL
 
