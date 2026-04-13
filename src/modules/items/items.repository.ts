@@ -30,11 +30,11 @@ export class ItemsRepository {
     const result = await this.prisma.item.updateMany({
       where: { id, list: { user_id: userId } },
       data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.description !== undefined && { description: dto.description }),
-        ...(dto.quantity !== undefined && { quantity: dto.quantity }),
-        ...(dto.location_id !== undefined && { location_id: dto.location_id }),
-        ...(dto.user_defined_value !== undefined && {
+        ...(dto.name != null && { name: dto.name }),
+        ...(dto.description != null && { description: dto.description }),
+        ...(dto.quantity != null && { quantity: dto.quantity }),
+        ...(dto.location_id != null && { location_id: dto.location_id }),
+        ...(dto.user_defined_value != null && {
           user_defined_value: dto.user_defined_value,
         }),
       },
