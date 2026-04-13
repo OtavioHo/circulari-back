@@ -13,7 +13,7 @@ export class ListsService {
       id: list.id,
       name: list.name,
       item_count: list._count.items,
-      total_value: list.items.reduce((sum, item) => sum + Number(item.user_defined_value ?? 0), 0),
+      total_value: list.total_value,
       created_at: list.created_at,
     }));
   }

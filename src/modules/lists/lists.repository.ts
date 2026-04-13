@@ -5,15 +5,29 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ListsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAllByUser(userId: string) {
-    return this.prisma.list.findMany({
+  async findAllByUser(userId: string) {
+    const lists = await this.prisma.list.findMany({
       where: { user_id: userId },
-      include: {
-        _count: { select: { items: true } },
-        items: { select: { user_defined_value: true } },
-      },
+      include: { _count: { select: { items: true } } },
       orderBy: { created_at: 'desc' },
     });
+
+    if (lists.length === 0) return [];
+
+    const totals = await this.prisma.item.groupBy({
+      by: ['list_id'],
+      where: { list_id: { in: lists.map((l) => l.id) } },
+      _sum: { user_defined_value: true },
+    });
+
+    const totalByListId = new Map(
+      totals.map((t) => [t.list_id, Number(t._sum.user_defined_value ?? 0)]),
+    );
+
+    return lists.map((list) => ({
+      ...list,
+      total_value: totalByListId.get(list.id) ?? 0,
+    }));
   }
 
   create(userId: string, name: string) {

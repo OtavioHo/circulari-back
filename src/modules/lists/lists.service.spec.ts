@@ -36,7 +36,7 @@ describe('ListsService', () => {
       expect(result).toEqual([]);
     });
 
-    it('maps _count.items to item_count and sums user_defined_value to total_value', async () => {
+    it('maps repository result to shaped list response', async () => {
       repository.findAllByUser.mockResolvedValue([
         {
           id: 'list-1',
@@ -44,7 +44,7 @@ describe('ListsService', () => {
           user_id: 'user-1',
           created_at: new Date('2026-01-01'),
           _count: { items: 2 },
-          items: [{ user_defined_value: 10.5 as any }, { user_defined_value: 5.0 as any }],
+          total_value: 15.5,
         },
       ]);
 
@@ -52,26 +52,26 @@ describe('ListsService', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].item_count).toBe(2);
-      expect(result[0].total_value).toBeCloseTo(15.5);
+      expect(result[0].total_value).toBe(15.5);
       expect(result[0].id).toBe('list-1');
       expect(result[0].name).toBe('My List');
     });
 
-    it('treats null user_defined_value as 0 in total_value', async () => {
+    it('passes through zero total_value from repository', async () => {
       repository.findAllByUser.mockResolvedValue([
         {
           id: 'list-1',
           name: 'My List',
           user_id: 'user-1',
           created_at: new Date('2026-01-01'),
-          _count: { items: 2 },
-          items: [{ user_defined_value: null as any }, { user_defined_value: 7.0 as any }],
+          _count: { items: 0 },
+          total_value: 0,
         },
       ]);
 
       const result = await service.getAll('user-1');
 
-      expect(result[0].total_value).toBeCloseTo(7.0);
+      expect(result[0].total_value).toBe(0);
     });
   });
 

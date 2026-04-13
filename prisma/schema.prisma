@@ -39,6 +39,7 @@ model List {
   user  User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   items Item[]
 
+  @@index([user_id])
   @@map("lists")
 }
 
@@ -54,5 +55,6 @@ model Item {
 
   list List @relation(fields: [list_id], references: [id], onDelete: Cascade)
 
+  @@index([list_id])
   @@map("items")
 }
