@@ -22,7 +22,7 @@ export class ItemsService {
       name: item.name,
       description: item.description,
       quantity: item.quantity,
-      user_defined_value: item.user_defined_value ? Number(item.user_defined_value) : null,
+      user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
       images: [],
       created_at: item.created_at,
     };

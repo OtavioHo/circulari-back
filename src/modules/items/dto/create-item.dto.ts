@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateItemDto {
@@ -13,6 +14,7 @@ export class CreateItemDto {
   @IsOptional()
   description?: string;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @IsOptional()
@@ -22,6 +24,7 @@ export class CreateItemDto {
   @IsOptional()
   location_id?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   user_defined_value?: number;

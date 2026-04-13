@@ -69,13 +69,12 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | DELETE | /items/:id | Delete item |
 
 ```json
-// POST /items — request (multipart/form-data)
+// POST /items — request (application/json)
 {
   "list_id": "uuid",
   "name": "string",
-  "image": "<file>",         // optional, uploaded to S3/R2
   "description": "string",   // optional
-  "quantity": 1,
+  "quantity": 1,             // optional, min 1
   "location_id": "uuid",     // optional
   "user_defined_value": 0    // optional
 }
@@ -87,7 +86,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "description": "string",
   "quantity": 1,
   "user_defined_value": 0,
-  "images": [{ "id": "uuid", "url": "string" }],
+  "images": [],
   "created_at": "timestamp"
 }
 ```
