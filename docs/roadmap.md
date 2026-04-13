@@ -9,11 +9,11 @@
 - [ ] `POST /auth/social` (Google + Apple)
 - [x] JWT middleware
 
-## Milestone 2 — Lists + Items CRUD <Badge type="warning" text="In Progress" />
+## Milestone 2 — Lists + Items CRUD <Badge type="tip" text="Implemented" />
 
 - [x] Lists endpoints (GET, POST, PATCH, DELETE)
 - [x] Items endpoints (GET, POST, PATCH, DELETE)
-- [ ] Locations endpoints
+- [x] Locations endpoints
 - [x] Global item search (`GET /items?search=`)
 
 ## Milestone 3 — Image Upload + Storage <Badge type="danger" text="Not Implemented" />
