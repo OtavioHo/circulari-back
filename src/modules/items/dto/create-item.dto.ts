@@ -28,4 +28,7 @@ export class CreateItemDto {
   @IsNumber()
   @IsOptional()
   user_defined_value?: number;
+
+  @IsOptional()
+  image?: unknown;
 }

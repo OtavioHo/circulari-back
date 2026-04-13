@@ -42,7 +42,16 @@ export class ItemsService {
     }
   }
 
-  search(userId: string, query: string) {
-    return this.repository.searchByUser(userId, query);
+  async search(userId: string, query: string) {
+    const items = await this.repository.searchByUser(userId, query);
+    return items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
+      images: [],
+      created_at: item.created_at,
+    }));
   }
 }
