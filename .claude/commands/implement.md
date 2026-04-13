@@ -70,7 +70,22 @@ npm run test
 
 If tests fail in code you changed, fix the code. If tests are missing for new behavior you added, write them.
 
-## 6. Update documentation
+## 6. Update Postman collection
+
+If you added, removed, or changed any controller endpoints (routes, methods, request bodies, path params), update `circulari.postman_collection.json` at the repo root to reflect those changes:
+
+- **New endpoint** — add a new request item inside the matching folder (or create a new folder for a new controller). Include the correct method, path, headers (`Content-Type` and/or `Authorization: Bearer {{accessToken}}`), and a realistic example body.
+- **Changed endpoint** — update the affected request item (URL, method, body shape).
+- **Removed endpoint** — delete the corresponding request item.
+
+Keep these conventions consistent with what's already in the file:
+- All protected routes must include `"Authorization": "Bearer {{accessToken}}"` in headers.
+- Path parameters use Postman's `:param` syntax with a matching `variable` entry.
+- Register and login test scripts must auto-save `accessToken` and `refreshToken` to collection variables.
+
+If no controller endpoints changed in this issue, skip this step.
+
+## 7. Update documentation
 
 Read the issue's "Docs to Update" section and apply all content changes to the relevant files in `docs/`.
 
@@ -94,7 +109,7 @@ Badge reference:
 - `<Badge type="warning" text="In Progress" />` — partially done
 - `<Badge type="tip" text="Implemented" />` — complete
 
-## 7. Commit
+## 8. Commit
 
 Stage only the files you changed (never `git add -A`). Commit with:
 
@@ -104,7 +119,7 @@ Stage only the files you changed (never `git add -A`). Commit with:
 
 Example: `feat: add image upload to S3 (#42)`
 
-## 8. Push and open PR
+## 9. Push and open PR
 
 ```bash
 git push -u origin <branch-name>
@@ -132,6 +147,6 @@ EOF
 )"
 ```
 
-## 9. Report
+## 10. Report
 
 Show the user the PR URL and remind them to review before merging.
