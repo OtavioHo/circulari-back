@@ -23,7 +23,7 @@ hero:
 | Feature | Status |
 |---------|--------|
 | Auth (email + social) | <Badge type="warning" text="In Progress" /> |
-| Lists CRUD | <Badge type="danger" text="Not Implemented" /> |
+| Lists CRUD | <Badge type="tip" text="Implemented" /> |
 | Items CRUD | <Badge type="danger" text="Not Implemented" /> |
 | Image upload + storage | <Badge type="danger" text="Not Implemented" /> |
 | AI image analysis | <Badge type="danger" text="Not Implemented" /> |
