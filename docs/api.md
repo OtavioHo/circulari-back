@@ -59,7 +59,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ---
 
-## Items <Badge type="danger" text="Not Implemented" />
+## Items <Badge type="tip" text="Implemented" />
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

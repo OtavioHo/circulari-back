@@ -223,6 +223,86 @@
           }
         }
       ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "GET /items?search=",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/items?search=lamp",
+              "host": ["{{baseUrl}}"],
+              "path": ["items"],
+              "query": [
+                { "key": "search", "value": "lamp" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /items",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"list_id\": \"<list-id>\",\n  \"name\": \"Vintage Lamp\",\n  \"description\": \"Brass floor lamp from the 1960s\",\n  \"quantity\": 1,\n  \"user_defined_value\": 85.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["items"]
+            }
+          }
+        },
+        {
+          "name": "PATCH /items/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Lamp\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", ":id"],
+              "variable": [
+                { "key": "id", "value": "<item-id>" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /items/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/items/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", ":id"],
+              "variable": [
+                { "key": "id", "value": "<item-id>" }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
