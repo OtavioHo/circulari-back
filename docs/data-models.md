@@ -41,6 +41,7 @@
 | Field | Type | Notes |
 |-------|------|-------|
 | id | uuid | PK |
+| user_id | uuid | FK → users (per-user isolation) |
 | name | string | e.g. "Bedroom", "Box 3" |
 
 ## ItemImage

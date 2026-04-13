@@ -114,7 +114,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ---
 
-## Locations <Badge type="danger" text="Not Implemented" />
+## Locations <Badge type="tip" text="Implemented" />
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
