@@ -39,7 +39,8 @@ export class ItemsRepository {
         }),
       },
     });
-    return result.count;
+    if (result.count === 0) return null;
+    return this.prisma.item.findFirst({ where: { id } });
   }
 
   async delete(id: string, userId: string) {

@@ -29,10 +29,19 @@ export class ItemsService {
   }
 
   async update(id: string, userId: string, dto: UpdateItemDto) {
-    const count = await this.repository.update(id, userId, dto);
-    if (count === 0) {
+    const item = await this.repository.update(id, userId, dto);
+    if (!item) {
       throw new NotFoundException('Item not found');
     }
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
+      images: [],
+      created_at: item.created_at,
+    };
   }
 
   async remove(id: string, userId: string) {

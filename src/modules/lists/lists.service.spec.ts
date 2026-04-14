@@ -98,16 +98,22 @@ describe('ListsService', () => {
   });
 
   describe('rename', () => {
-    it('delegates to repository when list exists', async () => {
-      repository.update.mockResolvedValue(1);
+    it('returns the updated list when found', async () => {
+      repository.update.mockResolvedValue({
+        id: 'list-1',
+        user_id: 'user-1',
+        name: 'Updated Name',
+        created_at: new Date('2026-01-01'),
+      });
 
-      await service.rename('list-1', 'user-1', { name: 'Updated Name' });
+      const result = await service.rename('list-1', 'user-1', { name: 'Updated Name' });
 
       expect(repository.update).toHaveBeenCalledWith('list-1', 'user-1', 'Updated Name');
+      expect(result).toMatchObject({ id: 'list-1', name: 'Updated Name' });
     });
 
     it('throws NotFoundException when list not found or not owned', async () => {
-      repository.update.mockResolvedValue(0);
+      repository.update.mockResolvedValue(null);
 
       await expect(service.rename('list-999', 'user-1', { name: 'x' })).rejects.toThrow(
         NotFoundException,

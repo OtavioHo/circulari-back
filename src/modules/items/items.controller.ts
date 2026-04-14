@@ -34,9 +34,9 @@ export class ItemsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateItemDto, @Req() req: Request) {
+  update(@Param('id') id: string, @Body() dto: UpdateItemDto, @Req() req: Request) {
     const user = req.user as { id: string };
-    await this.itemsService.update(id, user.id, dto);
+    return this.itemsService.update(id, user.id, dto);
   }
 
   @Delete(':id')

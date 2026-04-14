@@ -28,16 +28,17 @@ describe('LocationsService', () => {
   });
 
   describe('update', () => {
-    it('delegates to repository when location is owned by user', async () => {
-      repository.update.mockResolvedValue(1);
+    it('returns the updated location when found', async () => {
+      repository.update.mockResolvedValue({ id: 'loc-1', name: 'Bedroom' });
 
-      await service.update('loc-1', 'user-1', 'Bedroom');
+      const result = await service.update('loc-1', 'user-1', 'Bedroom');
 
       expect(repository.update).toHaveBeenCalledWith('loc-1', 'user-1', 'Bedroom');
+      expect(result).toEqual({ id: 'loc-1', name: 'Bedroom' });
     });
 
     it('throws NotFoundException when location not found or not owned', async () => {
-      repository.update.mockResolvedValue(0);
+      repository.update.mockResolvedValue(null);
 
       await expect(service.update('loc-999', 'user-1', 'Bedroom')).rejects.toThrow(
         NotFoundException,

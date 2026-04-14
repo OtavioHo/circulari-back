@@ -101,16 +101,28 @@ describe('ItemsService', () => {
   });
 
   describe('update', () => {
-    it('delegates to repository when item is owned by user', async () => {
-      itemsRepository.update.mockResolvedValue(1);
+    const mockUpdatedItem = {
+      id: 'item-1',
+      list_id: 'list-1',
+      name: 'Updated',
+      description: null,
+      quantity: 1,
+      location_id: null,
+      user_defined_value: null,
+      created_at: new Date(),
+    };
 
-      await service.update('item-1', 'user-1', { name: 'Updated' });
+    it('returns the updated item when found', async () => {
+      itemsRepository.update.mockResolvedValue(mockUpdatedItem);
+
+      const result = await service.update('item-1', 'user-1', { name: 'Updated' });
 
       expect(itemsRepository.update).toHaveBeenCalledWith('item-1', 'user-1', { name: 'Updated' });
+      expect(result).toMatchObject({ id: 'item-1', name: 'Updated', images: [] });
     });
 
     it('throws NotFoundException when item not found or not owned', async () => {
-      itemsRepository.update.mockResolvedValue(0);
+      itemsRepository.update.mockResolvedValue(null);
 
       await expect(service.update('item-999', 'user-1', { name: 'x' })).rejects.toThrow(
         NotFoundException,
