@@ -5,7 +5,6 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ListsModule } from './modules/lists/lists.module';
 import { ItemsModule } from './modules/items/items.module';
-import { LocationsModule } from './modules/locations/locations.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { AiModule } from './modules/ai/ai.module';
 
@@ -20,7 +19,6 @@ import { AiModule } from './modules/ai/ai.module';
     AuthModule,
     ListsModule,
     ItemsModule,
-    LocationsModule,
     StorageModule,
     AiModule,
   ],

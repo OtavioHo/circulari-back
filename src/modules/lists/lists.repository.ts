@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateListDto } from './dto/create-list.dto';
+import { UpdateListDto } from './dto/update-list.dto';
 
 @Injectable()
 export class ListsRepository {
@@ -30,9 +32,9 @@ export class ListsRepository {
     }));
   }
 
-  create(userId: string, name: string) {
+  create(userId: string, dto: CreateListDto) {
     return this.prisma.list.create({
-      data: { user_id: userId, name },
+      data: { user_id: userId, name: dto.name, location: dto.location },
     });
   }
 
@@ -40,10 +42,13 @@ export class ListsRepository {
     return this.prisma.list.findFirst({ where: { id, user_id: userId } });
   }
 
-  async update(id: string, userId: string, name: string) {
+  async update(id: string, userId: string, dto: UpdateListDto) {
     const result = await this.prisma.list.updateMany({
       where: { id, user_id: userId },
-      data: { name },
+      data: {
+        name: dto.name,
+        ...(dto.location !== undefined && { location: dto.location }),
+      },
     });
     if (result.count === 0) return null;
     return this.prisma.list.findUnique({ where: { id } });

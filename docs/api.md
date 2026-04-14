@@ -52,16 +52,16 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ```json
 // POST /lists — request
-{ "name": "string" }
+{ "name": "string", "location": "string" }   // location optional
 
 // PATCH /lists/:id — request
-{ "name": "string" }
+{ "name": "string", "location": "string" }   // location optional
 
 // PATCH /lists/:id — response 200
-{ "id": "uuid", "name": "string", "created_at": "timestamp" }
+{ "id": "uuid", "name": "string", "location": "string | null", "created_at": "timestamp" }
 
 // GET /lists — response 200
-[{ "id": "uuid", "name": "string", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
+[{ "id": "uuid", "name": "string", "location": "string | null", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
 
 // GET /lists/:id/items — query params
 // cursor?: uuid   — ID of the last item seen (omit for first page)
@@ -105,7 +105,6 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "name": "string",
   "description": "string",   // optional
   "quantity": 1,             // optional, min 1
-  "location_id": "uuid",     // optional
   "user_defined_value": 0    // optional
 }
 
@@ -125,7 +124,6 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "name": "string",
   "description": "string",
   "quantity": 1,
-  "location_id": "uuid",
   "user_defined_value": 0
 }
 
@@ -162,24 +160,3 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 }
 ```
 
----
-
-## Locations <Badge type="tip" text="Implemented" />
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /location?search= | Search locations |
-| POST | /location | Create location |
-| PATCH | /location/:id | Rename location |
-| DELETE | /location/:id | Delete location |
-
-```json
-// POST /location — request
-{ "name": "string" }
-
-// PATCH /location/:id — request
-{ "name": "string" }
-
-// PATCH /location/:id — response 200
-{ "id": "uuid", "name": "string" }
-```

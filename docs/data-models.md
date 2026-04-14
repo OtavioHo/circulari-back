@@ -21,6 +21,7 @@
 | id | uuid | PK |
 | user_id | uuid | FK → users |
 | name | string | |
+| location | string | nullable, plain text address |
 | created_at | timestamp | |
 
 ## Item
@@ -32,17 +33,8 @@
 | name | string | AI-suggested or user-defined |
 | description | string | nullable |
 | quantity | integer | default 1 |
-| location_id | uuid | FK → locations, nullable |
 | user_defined_value | decimal | user override; AI price used if null |
 | created_at | timestamp | |
-
-## Location
-
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | PK |
-| user_id | uuid | FK → users (per-user isolation) |
-| name | string | e.g. "Bedroom", "Box 3" |
 
 ## ItemImage
 

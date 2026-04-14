@@ -25,8 +25,7 @@ model User {
   refresh_token_hash String?
   created_at         DateTime @default(now()) @map("created_at")
 
-  lists     List[]
-  locations Location[]
+  lists List[]
 
   @@map("users")
 }
@@ -35,6 +34,7 @@ model List {
   id         String   @id @default(uuid())
   user_id    String
   name       String
+  location   String?
   created_at DateTime @default(now()) @map("created_at")
 
   user  User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -44,29 +44,16 @@ model List {
   @@map("lists")
 }
 
-model Location {
-  id      String @id @default(uuid())
-  user_id String
-  name    String
-  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  items   Item[]
-
-  @@index([user_id])
-  @@map("locations")
-}
-
 model Item {
   id                 String   @id @default(uuid())
   list_id            String
   name               String
   description        String?
   quantity           Int      @default(1)
-  location_id        String?
   user_defined_value Decimal?
   created_at         DateTime @default(now()) @map("created_at")
 
-  list     List      @relation(fields: [list_id], references: [id], onDelete: Cascade)
-  location Location? @relation(fields: [location_id], references: [id], onDelete: SetNull)
+  list List @relation(fields: [list_id], references: [id], onDelete: Cascade)
 
   @@index([list_id])
   @@map("items")

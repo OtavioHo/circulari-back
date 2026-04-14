@@ -33,8 +33,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             }
           }
         }
@@ -48,7 +52,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -56,8 +63,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             }
           },
           "event": [
@@ -79,7 +91,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -87,8 +102,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           },
           "event": [
@@ -100,7 +120,8 @@
                   "if (json.token) pm.collectionVariables.set('accessToken', json.token);",
                   "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
                 ],
-                "type": "text/javascript"              }
+                "type": "text/javascript"
+              }
             }
           ]
         },
@@ -109,12 +130,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{refreshToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{refreshToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             }
           },
           "event": [
@@ -136,12 +165,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             }
           }
         }
@@ -155,12 +192,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/lists",
-              "host": ["{{baseUrl}}"],
-              "path": ["lists"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists"
+              ]
             }
           }
         },
@@ -169,17 +213,27 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My First List\"\n}"
+              "raw": "{\n  \"name\": \"My First List\",\n  \"location\": \"123 Main St\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
-              "host": ["{{baseUrl}}"],
-              "path": ["lists"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists"
+              ]
             }
           }
         },
@@ -188,19 +242,33 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Renamed List\"\n}"
+              "raw": "{\n  \"name\": \"Renamed List\",\n  \"location\": \"456 Oak Ave\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["lists", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                ":id"
+              ],
               "variable": [
-                { "key": "id", "value": "<list-id>" }
+                {
+                  "key": "id",
+                  "value": "<list-id>"
+                }
               ]
             }
           }
@@ -210,18 +278,39 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/lists/:id/items?limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["lists", ":id", "items"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                ":id",
+                "items"
+              ],
               "query": [
-                { "key": "cursor", "value": "", "description": "ID of the last item seen (omit for first page)", "disabled": true },
-                { "key": "limit", "value": "20", "description": "Page size (1–100, default 20)" }
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": "ID of the last item seen (omit for first page)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size (1\u2013100, default 20)"
+                }
               ],
               "variable": [
-                { "key": "id", "value": "<list-id>" }
+                {
+                  "key": "id",
+                  "value": "<list-id>"
+                }
               ]
             }
           }
@@ -231,14 +320,25 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/lists/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["lists", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                ":id"
+              ],
               "variable": [
-                { "key": "id", "value": "<list-id>" }
+                {
+                  "key": "id",
+                  "value": "<list-id>"
+                }
               ]
             }
           }
@@ -253,14 +353,24 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/items?search=lamp",
-              "host": ["{{baseUrl}}"],
-              "path": ["items"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "items"
+              ],
               "query": [
-                { "key": "search", "value": "lamp" }
+                {
+                  "key": "search",
+                  "value": "lamp"
+                }
               ]
             }
           }
@@ -270,8 +380,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -279,8 +395,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/items",
-              "host": ["{{baseUrl}}"],
-              "path": ["items"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "items"
+              ]
             }
           }
         },
@@ -289,8 +409,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -298,10 +424,18 @@
             },
             "url": {
               "raw": "{{baseUrl}}/items/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["items", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "items",
+                ":id"
+              ],
               "variable": [
-                { "key": "id", "value": "<item-id>" }
+                {
+                  "key": "id",
+                  "value": "<item-id>"
+                }
               ]
             }
           }
@@ -311,14 +445,25 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/items/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["items", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "items",
+                ":id"
+              ],
               "variable": [
-                { "key": "id", "value": "<item-id>" }
+                {
+                  "key": "id",
+                  "value": "<item-id>"
+                }
               ]
             }
           }
@@ -333,7 +478,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "body": {
               "mode": "formdata",
@@ -342,93 +490,18 @@
                   "key": "image",
                   "type": "file",
                   "src": "/path/to/image.jpg",
-                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF — max 10 MB)"
+                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF \u2014 max 10 MB)"
                 }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/ai/analyze",
-              "host": ["{{baseUrl}}"],
-              "path": ["ai", "analyze"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Locations",
-      "item": [
-        {
-          "name": "GET /location?search=",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/location?search=bedroom",
-              "host": ["{{baseUrl}}"],
-              "path": ["location"],
-              "query": [
-                { "key": "search", "value": "bedroom" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "POST /location",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Bedroom\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/location",
-              "host": ["{{baseUrl}}"],
-              "path": ["location"]
-            }
-          }
-        },
-        {
-          "name": "PATCH /location/:id",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Master Bedroom\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/location/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["location", ":id"],
-              "variable": [
-                { "key": "id", "value": "<location-id>" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "DELETE /location/:id",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/location/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["location", ":id"],
-              "variable": [
-                { "key": "id", "value": "<location-id>" }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "analyze"
               ]
             }
           }

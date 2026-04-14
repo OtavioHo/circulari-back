@@ -13,7 +13,7 @@
 
 - [x] Lists endpoints (GET, POST, PATCH, DELETE)
 - [x] Items endpoints (GET, POST, PATCH, DELETE)
-- [x] Locations endpoints
+- [x] Refactor location from separate entity to plain `location` string on List
 - [x] Global item search (`GET /items?search=`)
 - [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
 
