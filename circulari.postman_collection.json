@@ -206,6 +206,27 @@
           }
         },
         {
+          "name": "GET /lists/:id/items",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lists/:id/items?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["lists", ":id", "items"],
+              "query": [
+                { "key": "cursor", "value": "", "description": "ID of the last item seen (omit for first page)", "disabled": true },
+                { "key": "limit", "value": "20", "description": "Page size (1–100, default 20)" }
+              ],
+              "variable": [
+                { "key": "id", "value": "<list-id>" }
+              ]
+            }
+          }
+        },
+        {
           "name": "DELETE /lists/:id",
           "request": {
             "method": "DELETE",

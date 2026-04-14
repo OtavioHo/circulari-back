@@ -54,4 +54,30 @@ export class ItemsService {
       created_at: item.created_at,
     }));
   }
+
+  async getByList(listId: string, userId: string, cursor?: string, limit: number = 20) {
+    const list = await this.listsRepository.findOneByUser(listId, userId);
+    if (!list) {
+      throw new NotFoundException('List not found');
+    }
+
+    const rows = await this.repository.findByList(listId, userId, cursor, limit);
+    const hasNextPage = rows.length > limit;
+    const items = hasNextPage ? rows.slice(0, limit) : rows;
+    const nextCursor = hasNextPage ? items[items.length - 1].id : null;
+
+    return {
+      data: items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        quantity: item.quantity,
+        user_defined_value:
+          item.user_defined_value != null ? Number(item.user_defined_value) : null,
+        images: [],
+        created_at: item.created_at,
+      })),
+      nextCursor,
+    };
+  }
 }

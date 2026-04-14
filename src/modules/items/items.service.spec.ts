@@ -21,6 +21,7 @@ describe('ItemsService', () => {
             update: jest.fn(),
             delete: jest.fn(),
             searchByUser: jest.fn(),
+            findByList: jest.fn(),
           },
         },
         {
@@ -192,6 +193,81 @@ describe('ItemsService', () => {
       const result = await service.search('user-1', 'nonexistent');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getByList', () => {
+    const mockList = { id: 'list-1', user_id: 'user-1', name: 'My List', created_at: new Date() };
+    const makeItem = (id: string, createdAt = new Date()) => ({
+      id,
+      list_id: 'list-1',
+      name: `Item ${id}`,
+      description: null,
+      quantity: 1,
+      location_id: null,
+      location: null,
+      user_defined_value: null,
+      created_at: createdAt,
+    });
+
+    it('throws NotFoundException when list does not belong to caller', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(null);
+
+      await expect(service.getByList('list-1', 'user-1')).rejects.toThrow(NotFoundException);
+      expect(itemsRepository.findByList).not.toHaveBeenCalled();
+    });
+
+    it('returns first page with nextCursor set when more items exist', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      const rows = Array.from({ length: 21 }, (_, i) => makeItem(`item-${i}`));
+      itemsRepository.findByList.mockResolvedValue(rows);
+
+      const result = await service.getByList('list-1', 'user-1', undefined, 20);
+
+      expect(itemsRepository.findByList).toHaveBeenCalledWith('list-1', 'user-1', undefined, 20);
+      expect(result.data).toHaveLength(20);
+      expect(result.nextCursor).toBe('item-19');
+    });
+
+    it('returns last page with nextCursor null when no more items', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      const rows = [makeItem('item-1'), makeItem('item-2')];
+      itemsRepository.findByList.mockResolvedValue(rows);
+
+      const result = await service.getByList('list-1', 'user-1', 'cursor-id', 20);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.nextCursor).toBeNull();
+    });
+
+    it('returns empty data with nextCursor null for empty list', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.findByList.mockResolvedValue([]);
+
+      const result = await service.getByList('list-1', 'user-1');
+
+      expect(result.data).toEqual([]);
+      expect(result.nextCursor).toBeNull();
+    });
+
+    it('passes cursor to repository when provided', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.findByList.mockResolvedValue([makeItem('item-5')]);
+
+      await service.getByList('list-1', 'user-1', 'cursor-abc', 10);
+
+      expect(itemsRepository.findByList).toHaveBeenCalledWith('list-1', 'user-1', 'cursor-abc', 10);
+    });
+
+    it('converts user_defined_value Decimal to number', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.findByList.mockResolvedValue([
+        { ...makeItem('item-1'), user_defined_value: { valueOf: () => 12.5 } as any },
+      ]);
+
+      const result = await service.getByList('list-1', 'user-1');
+
+      expect(result.data[0].user_defined_value).toBe(12.5);
     });
   });
 });

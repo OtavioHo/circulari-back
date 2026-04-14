@@ -45,6 +45,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /lists | All lists for authenticated user |
+| GET | /lists/:id/items | Paginated items for a specific list |
 | POST | /lists | Create list |
 | PATCH | /lists/:id | Rename list |
 | DELETE | /lists/:id | Delete list and all its items |
@@ -55,6 +56,29 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 // GET /lists — response 200
 [{ "id": "uuid", "name": "string", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
+
+// GET /lists/:id/items — query params
+// cursor?: uuid   — ID of the last item seen (omit for first page)
+// limit?: number  — page size, 1–100 (default 20)
+
+// GET /lists/:id/items — response 200
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "description": "string | null",
+      "quantity": 1,
+      "user_defined_value": 0,
+      "images": [],
+      "created_at": "timestamp"
+    }
+  ],
+  "nextCursor": "uuid | null"
+}
+
+// GET /lists/:id/items — errors
+// 404 — list not found or does not belong to the authenticated user
 ```
 
 ---

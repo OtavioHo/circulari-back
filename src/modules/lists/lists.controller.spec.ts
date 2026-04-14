@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IS_PUBLIC_KEY } from '../auth/decorators/public.decorator';
 import { ListsController } from './lists.controller';
 import { ListsService } from './lists.service';
+import { ItemsService } from '../items/items.service';
 
 describe('ListsController', () => {
   let controller: ListsController;
@@ -14,10 +15,17 @@ describe('ListsController', () => {
     remove: jest.fn(),
   };
 
+  const mockItemsService = {
+    getByList: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ListsController],
-      providers: [{ provide: ListsService, useValue: mockListsService }],
+      providers: [
+        { provide: ListsService, useValue: mockListsService },
+        { provide: ItemsService, useValue: mockItemsService },
+      ],
     }).compile();
 
     controller = module.get<ListsController>(ListsController);
@@ -104,6 +112,41 @@ describe('ListsController', () => {
 
     it('is NOT marked @Public so JwtAuthGuard protects it', () => {
       const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, ListsController.prototype.remove);
+      expect(isPublic).toBeUndefined();
+    });
+  });
+
+  describe('getItems', () => {
+    it('delegates to itemsService.getByList with listId, userId, cursor, and limit', async () => {
+      const expected = { data: [], nextCursor: null };
+      mockItemsService.getByList.mockResolvedValue(expected);
+
+      const result = await controller.getItems(
+        'list-1',
+        { cursor: 'cursor-abc', limit: 10 },
+        makeReq('user-1'),
+      );
+
+      expect(mockItemsService.getByList).toHaveBeenCalledWith('list-1', 'user-1', 'cursor-abc', 10);
+      expect(result).toBe(expected);
+    });
+
+    it('delegates with undefined cursor and default limit when not provided', async () => {
+      const expected = { data: [], nextCursor: null };
+      mockItemsService.getByList.mockResolvedValue(expected);
+
+      await controller.getItems('list-1', {}, makeReq('user-1'));
+
+      expect(mockItemsService.getByList).toHaveBeenCalledWith(
+        'list-1',
+        'user-1',
+        undefined,
+        undefined,
+      );
+    });
+
+    it('is NOT marked @Public so JwtAuthGuard protects it', () => {
+      const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, ListsController.prototype.getItems);
       expect(isPublic).toBeUndefined();
     });
   });
