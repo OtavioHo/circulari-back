@@ -1,4 +1,4 @@
-# AI Integration <Badge type="danger" text="Not Implemented" />
+# AI Integration <Badge type="tip" text="Implemented" />
 
 ## Model
 

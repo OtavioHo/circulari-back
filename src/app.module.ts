@@ -7,6 +7,7 @@ import { ListsModule } from './modules/lists/lists.module';
 import { ItemsModule } from './modules/items/items.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { StorageModule } from './modules/storage/storage.module';
     ItemsModule,
     LocationsModule,
     StorageModule,
+    AiModule,
   ],
 })
 export class AppModule {}
