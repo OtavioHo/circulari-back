@@ -27,7 +27,7 @@
 - [x] `POST /ai/analyze` endpoint
 - [x] OpenAI Vision API call
 - [x] Price normalization layer
-- [x] Return suggestions + `image_url` to client
+- [x] Return suggestions to client (`name`, `category`, `price_min`, `price_max`)
 - [x] Error response when AI fails (client falls back to manual entry)
 
 ## Milestone 5 — Dashboard + Search <Badge type="danger" text="Not Implemented" />
