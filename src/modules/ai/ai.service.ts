@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
@@ -20,6 +20,7 @@ export interface AnalyzeResult {
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
   private readonly openai: OpenAI;
 
   constructor(private readonly config: ConfigService) {
@@ -45,17 +46,31 @@ export class AiService {
           },
         ],
         max_tokens: 256,
+        response_format: { type: 'json_object' },
+        temperature: 0,
       });
 
       const raw = response.choices[0]?.message?.content ?? '';
-      const parsed = JSON.parse(raw) as AnalyzeResult;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
 
-      if (parsed.price_min > parsed.price_max) {
-        [parsed.price_min, parsed.price_max] = [parsed.price_max, parsed.price_min];
+      const name = typeof parsed.name === 'string' ? parsed.name : '';
+      const category = typeof parsed.category === 'string' ? parsed.category : '';
+      const price_min = Number(parsed.price_min);
+      const price_max = Number(parsed.price_max);
+
+      if (!name || !category || isNaN(price_min) || isNaN(price_max)) {
+        throw new Error(`Invalid AI response shape: ${raw}`);
       }
 
-      return parsed;
-    } catch {
+      const result: AnalyzeResult = { name, category, price_min, price_max };
+
+      if (result.price_min > result.price_max) {
+        [result.price_min, result.price_max] = [result.price_max, result.price_min];
+      }
+
+      return result;
+    } catch (err) {
+      this.logger.error('AI analysis failed', err);
       throw new ServiceUnavailableException('AI analysis failed');
     }
   }
