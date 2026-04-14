@@ -22,13 +22,13 @@
 - [ ] Image upload to S3/R2 on `POST /items`
 - [ ] `ItemImage` DB record created with returned URL
 
-## Milestone 4 — AI Integration <Badge type="danger" text="Not Implemented" />
+## Milestone 4 — AI Integration <Badge type="tip" text="Implemented" />
 
-- [ ] `POST /ai/analyze` endpoint
-- [ ] OpenAI Vision API call
-- [ ] Price normalization layer
-- [ ] Return suggestions + `image_url` to client
-- [ ] Error response when AI fails (client falls back to manual entry)
+- [x] `POST /ai/analyze` endpoint
+- [x] OpenAI Vision API call
+- [x] Price normalization layer
+- [x] Return suggestions to client (`name`, `category`, `price_min`, `price_max`)
+- [x] Error response when AI fails (client falls back to manual entry)
 
 ## Milestone 5 — Dashboard + Search <Badge type="danger" text="Not Implemented" />
 

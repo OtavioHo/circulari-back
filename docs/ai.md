@@ -1,4 +1,4 @@
-# AI Integration <Badge type="danger" text="Not Implemented" />
+# AI Integration <Badge type="tip" text="Implemented" />
 
 ## Model
 
@@ -37,6 +37,5 @@ Return only valid JSON, no explanation:
 ## Price Normalization
 
 After receiving AI response:
-1. Validate `price_min <= price_max`
-2. Detect and adjust outliers (compare against category average)
-3. If AI fails, return error — client handles fallback (manual entry)
+1. Swap `price_min` and `price_max` if out of order (`price_min > price_max`)
+2. If AI fails, return error — client handles fallback (manual entry)

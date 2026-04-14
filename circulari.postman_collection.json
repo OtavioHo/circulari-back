@@ -305,6 +305,36 @@
       ]
     },
     {
+      "name": "AI",
+      "item": [
+        {
+          "name": "POST /ai/analyze",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/image.jpg",
+                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF — max 10 MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "analyze"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Locations",
       "item": [
         {
