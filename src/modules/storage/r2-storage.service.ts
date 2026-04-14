@@ -1,9 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { IStorageService } from './storage.interface';
 
-@Injectable()
 export class R2StorageService implements IStorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
@@ -12,7 +10,9 @@ export class R2StorageService implements IStorageService {
   constructor(private readonly config: ConfigService) {
     this.bucket = config.getOrThrow<string>('STORAGE_BUCKET');
     const endpoint = config.getOrThrow<string>('STORAGE_ENDPOINT');
-    this.publicUrl = config.get<string>('STORAGE_PUBLIC_URL') ?? `${endpoint}/${this.bucket}`;
+    this.publicUrl = (
+      config.get<string>('STORAGE_PUBLIC_URL') ?? `${endpoint}/${this.bucket}`
+    ).replace(/\/$/, '');
 
     this.client = new S3Client({
       region: config.get<string>('STORAGE_REGION') ?? 'auto',
@@ -33,6 +33,6 @@ export class R2StorageService implements IStorageService {
         ContentType: mimetype,
       }),
     );
-    return `${this.publicUrl}/${key}`;
+    return `${this.publicUrl}/${key.replace(/^\//, '')}`;
   }
 }

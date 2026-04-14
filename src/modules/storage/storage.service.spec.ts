@@ -36,7 +36,7 @@ describe('S3StorageService', () => {
     STORAGE_SECRET_KEY: 'secret',
   };
 
-  beforeEach(() => mockSend.mockClear());
+  beforeEach(() => jest.clearAllMocks());
 
   it('calls PutObjectCommand with correct params', async () => {
     const service = new S3StorageService(mockConfig(baseConfig));
@@ -80,7 +80,7 @@ describe('R2StorageService', () => {
     STORAGE_ENDPOINT: 'https://accountid.r2.cloudflarestorage.com',
   };
 
-  beforeEach(() => mockSend.mockClear());
+  beforeEach(() => jest.clearAllMocks());
 
   it('calls PutObjectCommand with correct params', async () => {
     const service = new R2StorageService(mockConfig(baseConfig));
@@ -126,7 +126,7 @@ describe('MinioStorageService', () => {
     STORAGE_ENDPOINT: 'http://localhost:9000',
   };
 
-  beforeEach(() => mockSend.mockClear());
+  beforeEach(() => jest.clearAllMocks());
 
   it('calls PutObjectCommand with correct params', async () => {
     const service = new MinioStorageService(mockConfig(baseConfig));
