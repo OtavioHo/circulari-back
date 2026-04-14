@@ -10,8 +10,10 @@ export class MinioStorageService implements IStorageService {
   constructor(private readonly config: ConfigService) {
     this.bucket = config.getOrThrow<string>('STORAGE_BUCKET');
     const endpoint = config.getOrThrow<string>('STORAGE_ENDPOINT');
+    const normalizedEndpoint = endpoint.replace(/\/+$/, '');
     this.publicUrl = (
-      config.get<string>('STORAGE_PUBLIC_URL') ?? `${endpoint}/${this.bucket}`
+      config.get<string>('STORAGE_PUBLIC_URL') ??
+      `${normalizedEndpoint}/${this.bucket}`
     ).replace(/\/$/, '');
 
     this.client = new S3Client({
