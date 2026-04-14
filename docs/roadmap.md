@@ -15,6 +15,7 @@
 - [x] Items endpoints (GET, POST, PATCH, DELETE)
 - [x] Locations endpoints
 - [x] Global item search (`GET /items?search=`)
+- [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
 
 ## Milestone 3 — Image Upload + Storage <Badge type="warning" text="In Progress" />
 

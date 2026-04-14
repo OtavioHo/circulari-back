@@ -58,4 +58,14 @@ export class ItemsRepository {
       orderBy: { created_at: 'desc' },
     });
   }
+
+  findByList(listId: string, userId: string, cursor?: string, limit: number = 20) {
+    return this.prisma.item.findMany({
+      where: { list_id: listId, list: { user_id: userId } },
+      orderBy: { created_at: 'desc' },
+      take: limit + 1,
+      include: { location: true },
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+    });
+  }
 }
