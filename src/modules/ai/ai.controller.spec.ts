@@ -22,8 +22,9 @@ describe('AiController', () => {
     jest.clearAllMocks();
   });
 
+  // JPEG magic bytes (FF D8 FF E0) so detectMimeFromMagicBytes passes
   const fakeFile = {
-    buffer: Buffer.from('fake-data'),
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]),
     mimetype: 'image/jpeg',
     originalname: 'photo.jpg',
     size: 1024,
@@ -36,7 +37,7 @@ describe('AiController', () => {
 
       const result = await controller.analyze(fakeFile);
 
-      expect(mockAiService.analyze).toHaveBeenCalledWith(fakeFile.buffer, fakeFile.mimetype);
+      expect(mockAiService.analyze).toHaveBeenCalledWith(fakeFile.buffer, 'image/jpeg');
       expect(result).toBe(expected);
     });
 
