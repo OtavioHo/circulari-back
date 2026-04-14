@@ -217,7 +217,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["lists", ":id", "items"],
               "query": [
-                { "key": "cursor", "value": "", "description": "ID of the last item seen (omit for first page)" },
+                { "key": "cursor", "value": "", "description": "ID of the last item seen (omit for first page)", "disabled": true },
                 { "key": "limit", "value": "20", "description": "Page size (1–100, default 20)" }
               ],
               "variable": [
