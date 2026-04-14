@@ -14,10 +14,11 @@ export class LocationsService {
   }
 
   async update(id: string, userId: string, name: string) {
-    const count = await this.repository.update(id, userId, name);
-    if (count === 0) {
+    const location = await this.repository.update(id, userId, name);
+    if (!location) {
       throw new NotFoundException('Location not found');
     }
+    return location;
   }
 
   async remove(id: string, userId: string) {

@@ -45,7 +45,8 @@ export class ListsRepository {
       where: { id, user_id: userId },
       data: { name },
     });
-    return result.count;
+    if (result.count === 0) return null;
+    return this.prisma.list.findUnique({ where: { id } });
   }
 
   async delete(id: string, userId: string) {

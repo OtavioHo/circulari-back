@@ -34,9 +34,9 @@ export class LocationsController {
   }
 
   @Patch(':id')
-  async rename(@Param('id') id: string, @Body() dto: UpdateLocationDto, @Req() req: Request) {
+  rename(@Param('id') id: string, @Body() dto: UpdateLocationDto, @Req() req: Request) {
     const user = req.user as { id: string };
-    await this.locationsService.update(id, user.id, dto.name);
+    return this.locationsService.update(id, user.id, dto.name);
   }
 
   @Delete(':id')

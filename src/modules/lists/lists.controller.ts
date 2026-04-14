@@ -45,9 +45,9 @@ export class ListsController {
   }
 
   @Patch(':id')
-  async rename(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateListDto) {
+  rename(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateListDto) {
     const user = req.user as { id: string };
-    await this.listsService.rename(id, user.id, dto);
+    return this.listsService.rename(id, user.id, dto);
   }
 
   @Delete(':id')

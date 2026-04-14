@@ -28,7 +28,11 @@ export class LocationsRepository {
       where: { id, user_id: userId },
       data: { name },
     });
-    return result.count;
+    if (result.count === 0) return null;
+    return this.prisma.location.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
   }
 
   async delete(id: string, userId: string) {

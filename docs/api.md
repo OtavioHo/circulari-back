@@ -54,6 +54,12 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 // POST /lists — request
 { "name": "string" }
 
+// PATCH /lists/:id — request
+{ "name": "string" }
+
+// PATCH /lists/:id — response 200
+{ "id": "uuid", "name": "string", "created_at": "timestamp" }
+
 // GET /lists — response 200
 [{ "id": "uuid", "name": "string", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
 
@@ -113,6 +119,26 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "images": [],
   "created_at": "timestamp"
 }
+
+// PATCH /items/:id — request (all fields optional)
+{
+  "name": "string",
+  "description": "string",
+  "quantity": 1,
+  "location_id": "uuid",
+  "user_defined_value": 0
+}
+
+// PATCH /items/:id — response 200
+{
+  "id": "uuid",
+  "name": "string",
+  "description": "string | null",
+  "quantity": 1,
+  "user_defined_value": "number | null",
+  "images": [],
+  "created_at": "timestamp"
+}
 ```
 
 ---
@@ -150,4 +176,10 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 ```json
 // POST /location — request
 { "name": "string" }
+
+// PATCH /location/:id — request
+{ "name": "string" }
+
+// PATCH /location/:id — response 200
+{ "id": "uuid", "name": "string" }
 ```

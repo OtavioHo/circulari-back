@@ -30,10 +30,15 @@ export class ListsService {
   }
 
   async rename(id: string, userId: string, dto: UpdateListDto) {
-    const count = await this.repository.update(id, userId, dto.name);
-    if (count === 0) {
+    const list = await this.repository.update(id, userId, dto.name);
+    if (!list) {
       throw new NotFoundException('List not found');
     }
+    return {
+      id: list.id,
+      name: list.name,
+      created_at: list.created_at,
+    };
   }
 
   async remove(id: string, userId: string) {
