@@ -3,15 +3,23 @@ import { PrismaClient } from '../src/generated/prisma/client';
 const prisma = new PrismaClient();
 
 const categories = [
+  'Móveis',
   'Eletrônicos',
-  'Roupas e Acessórios',
-  'Casa e Decoração',
-  'Livros e Mídia',
+  'Smartphones',
+  'Computadores',
+  'Roupas',
+  'Acessórios',
+  'Sapatos',
+  'Cozinha',
+  'Decoração',
+  'Livros',
+  'Filmes',
   'Ferramentas',
-  'Esportes e Lazer',
-  'Saúde e Beleza',
-  'Brinquedos e Jogos',
-  'Alimentos e Bebidas',
+  'Máquinas',
+  'Artigos Esportivos',
+  'Colecionáveis',
+  'Artes',
+  'Bebidas',
   'Outros',
 ];
 
