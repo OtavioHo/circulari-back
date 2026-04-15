@@ -18,11 +18,11 @@
 - [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
 - [x] Category reference table with seeded Portuguese values; `category_id` on items
 
-## Milestone 3 — Image Upload + Storage <Badge type="warning" text="In Progress" />
+## Milestone 3 — Image Upload + Storage <Badge type="tip" text="Implemented" />
 
 - [x] S3-compatible storage abstraction
-- [ ] Image upload to S3/R2 on `POST /items`
-- [ ] `ItemImage` DB record created with returned URL
+- [x] Image upload to S3/R2 on `POST /items`
+- [x] `ItemImage` DB record created with returned URL
 
 ## Milestone 4 — AI Integration <Badge type="tip" text="Implemented" />
 

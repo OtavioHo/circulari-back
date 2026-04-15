@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 
+type ImagePayload = { url: string; storageKey: string; isMain: boolean };
+
+const includeImages = { category: true, images: true } as const;
+
 @Injectable()
 export class ItemsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -17,18 +21,43 @@ export class ItemsRepository {
         category_id: dto.category_id,
         user_defined_value: dto.user_defined_value,
       },
-      include: { category: true },
+      include: includeImages,
+    });
+  }
+
+  createWithImage(dto: CreateItemDto, itemId: string, image: ImagePayload) {
+    return this.prisma.$transaction(async (tx) => {
+      const item = await tx.item.create({
+        data: {
+          id: itemId,
+          list_id: dto.list_id,
+          name: dto.name,
+          description: dto.description,
+          quantity: dto.quantity ?? 1,
+          category_id: dto.category_id,
+          user_defined_value: dto.user_defined_value,
+        },
+      });
+      await tx.itemImage.create({
+        data: {
+          item_id: item.id,
+          url: image.url,
+          storage_key: image.storageKey,
+          is_main: image.isMain,
+        },
+      });
+      return tx.item.findUniqueOrThrow({ where: { id: item.id }, include: includeImages });
     });
   }
 
   findOneOwnedByUser(id: string, userId: string) {
     return this.prisma.item.findFirst({
       where: { id, list: { user_id: userId } },
-      include: { category: true },
+      include: includeImages,
     });
   }
 
-  async update(id: string, userId: string, dto: UpdateItemDto) {
+  async update(id: string, userId: string, dto: UpdateItemDto, image?: ImagePayload) {
     const result = await this.prisma.item.updateMany({
       where: { id, list: { user_id: userId } },
       data: {
@@ -42,7 +71,22 @@ export class ItemsRepository {
       },
     });
     if (result.count === 0) return null;
-    return this.prisma.item.findFirst({ where: { id }, include: { category: true } });
+
+    if (image) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.itemImage.deleteMany({ where: { item_id: id, is_main: true } });
+        await tx.itemImage.create({
+          data: {
+            item_id: id,
+            url: image.url,
+            storage_key: image.storageKey,
+            is_main: image.isMain,
+          },
+        });
+      });
+    }
+
+    return this.prisma.item.findFirst({ where: { id }, include: includeImages });
   }
 
   async delete(id: string, userId: string) {
@@ -59,7 +103,7 @@ export class ItemsRepository {
         name: { contains: search, mode: 'insensitive' },
       },
       orderBy: { created_at: 'desc' },
-      include: { category: true },
+      include: includeImages,
     });
   }
 
@@ -69,7 +113,7 @@ export class ItemsRepository {
       orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
-      include: { category: true },
+      include: includeImages,
     });
   }
 }

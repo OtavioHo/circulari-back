@@ -28,7 +28,4 @@ export class CreateItemDto {
   @IsUUID()
   @IsOptional()
   category_id?: string;
-
-  @IsOptional()
-  image?: unknown;
 }

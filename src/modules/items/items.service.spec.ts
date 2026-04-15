@@ -1,16 +1,75 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { ItemsRepository } from './items.repository';
 import { ListsRepository } from '../lists/lists.repository';
+import { STORAGE_SERVICE } from '../storage/storage.interface';
 import { Prisma } from '../../generated/prisma/client';
+
+const makeItem = (overrides: Partial<ReturnType<typeof baseItem>> = {}) => ({
+  ...baseItem(),
+  ...overrides,
+});
+
+function baseItem() {
+  return {
+    id: 'item-1',
+    list_id: 'list-1',
+    name: 'My Item',
+    description: null as string | null,
+    quantity: 1,
+    category_id: null as string | null,
+    category: null as { id: string; name: string } | null,
+    user_defined_value: null as { valueOf: () => number } | null,
+    images: [] as {
+      id: string;
+      item_id: string;
+      url: string;
+      storage_key: string;
+      is_main: boolean;
+      created_at: Date;
+    }[],
+    created_at: new Date('2026-01-01'),
+  };
+}
+
+const mockList = {
+  id: 'list-1',
+  user_id: 'user-1',
+  name: 'My List',
+  location: null,
+  created_at: new Date(),
+};
+
+const fakeImageFile = (
+  buf = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]),
+): Express.Multer.File =>
+  ({
+    buffer: buf,
+    mimetype: 'image/jpeg',
+    originalname: 'photo.jpg',
+    size: buf.length,
+    fieldname: 'image',
+    encoding: '7bit',
+    stream: null as any,
+    destination: '',
+    filename: '',
+    path: '',
+  }) as Express.Multer.File;
 
 describe('ItemsService', () => {
   let service: ItemsService;
   let itemsRepository: jest.Mocked<ItemsRepository>;
   let listsRepository: jest.Mocked<ListsRepository>;
+  let storageService: { upload: jest.Mock };
 
   beforeEach(async () => {
+    storageService = { upload: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ItemsService,
@@ -18,6 +77,7 @@ describe('ItemsService', () => {
           provide: ItemsRepository,
           useValue: {
             create: jest.fn(),
+            createWithImage: jest.fn(),
             findOneOwnedByUser: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
@@ -31,6 +91,10 @@ describe('ItemsService', () => {
             findOneByUser: jest.fn(),
           },
         },
+        {
+          provide: STORAGE_SERVICE,
+          useValue: storageService,
+        },
       ],
     }).compile();
 
@@ -41,32 +105,15 @@ describe('ItemsService', () => {
 
   describe('create', () => {
     const dto = { list_id: 'list-1', name: 'My Item' };
-    const mockItem = {
-      id: 'item-1',
-      list_id: 'list-1',
-      name: 'My Item',
-      description: null,
-      quantity: 1,
-      category_id: null,
-      category: null,
-      user_defined_value: null,
-      created_at: new Date('2026-01-01'),
-    };
 
-    it('creates item when list belongs to caller', async () => {
-      listsRepository.findOneByUser.mockResolvedValue({
-        id: 'list-1',
-        user_id: 'user-1',
-        name: 'My List',
-        location: null,
-        created_at: new Date(),
-      });
-      itemsRepository.create.mockResolvedValue(mockItem);
+    it('creates item without image when no file provided', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.create.mockResolvedValue(makeItem() as any);
 
       const result = await service.create('user-1', dto);
 
-      expect(listsRepository.findOneByUser).toHaveBeenCalledWith('list-1', 'user-1');
       expect(itemsRepository.create).toHaveBeenCalledWith(dto);
+      expect(storageService.upload).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: 'item-1',
         name: 'My Item',
@@ -79,6 +126,52 @@ describe('ItemsService', () => {
       });
     });
 
+    it('uploads image and creates item + image record when file provided', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      storageService.upload.mockResolvedValue('https://cdn.example.com/items/item-1/abc.jpg');
+      const itemWithImage = makeItem({
+        images: [
+          {
+            id: 'img-1',
+            item_id: 'item-1',
+            url: 'https://cdn.example.com/items/item-1/abc.jpg',
+            storage_key: 'items/item-1/abc.jpg',
+            is_main: true,
+            created_at: new Date(),
+          },
+        ],
+      });
+      itemsRepository.createWithImage.mockResolvedValue(itemWithImage as any);
+
+      const result = await service.create('user-1', dto, fakeImageFile());
+
+      expect(storageService.upload).toHaveBeenCalledTimes(1);
+      expect(itemsRepository.createWithImage).toHaveBeenCalledTimes(1);
+      expect(itemsRepository.create).not.toHaveBeenCalled();
+      expect(result.images).toHaveLength(1);
+      expect(result.images[0].is_main).toBe(true);
+    });
+
+    it('does not persist item when storage upload throws', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      storageService.upload.mockRejectedValue(new Error('S3 down'));
+
+      await expect(service.create('user-1', dto, fakeImageFile())).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      expect(itemsRepository.createWithImage).not.toHaveBeenCalled();
+      expect(itemsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException for invalid MIME type (magic bytes mismatch)', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      // Buffer that doesn't match any known magic bytes
+      const badFile = fakeImageFile(Buffer.alloc(16, 0));
+
+      await expect(service.create('user-1', dto, badFile)).rejects.toThrow(BadRequestException);
+      expect(storageService.upload).not.toHaveBeenCalled();
+    });
+
     it('throws NotFoundException when list does not belong to caller', async () => {
       listsRepository.findOneByUser.mockResolvedValue(null);
 
@@ -88,39 +181,19 @@ describe('ItemsService', () => {
 
     it('includes category object in response when category_id is provided', async () => {
       const category = { id: '00000000-0000-0000-0000-000000000001', name: 'Eletrônicos' };
-      listsRepository.findOneByUser.mockResolvedValue({
-        id: 'list-1',
-        user_id: 'user-1',
-        name: 'My List',
-        location: null,
-        created_at: new Date(),
-      });
-      itemsRepository.create.mockResolvedValue({
-        ...mockItem,
-        category_id: '00000000-0000-0000-0000-000000000001',
-        category,
-      });
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.create.mockResolvedValue(makeItem({ category_id: category.id, category }) as any);
 
-      const result = await service.create('user-1', {
-        ...dto,
-        category_id: '00000000-0000-0000-0000-000000000001',
-      });
+      const result = await service.create('user-1', { ...dto, category_id: category.id });
 
       expect(result.category).toEqual(category);
     });
 
     it('converts user_defined_value Decimal to number in response', async () => {
-      listsRepository.findOneByUser.mockResolvedValue({
-        id: 'list-1',
-        user_id: 'user-1',
-        name: 'My List',
-        location: null,
-        created_at: new Date(),
-      });
-      itemsRepository.create.mockResolvedValue({
-        ...mockItem,
-        user_defined_value: { valueOf: () => 9.99 } as any,
-      });
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      itemsRepository.create.mockResolvedValue(
+        makeItem({ user_defined_value: { valueOf: () => 9.99 } as any }) as any,
+      );
 
       const result = await service.create('user-1', { ...dto, user_defined_value: 9.99 });
 
@@ -128,13 +201,7 @@ describe('ItemsService', () => {
     });
 
     it('throws BadRequestException when category_id does not exist (P2003)', async () => {
-      listsRepository.findOneByUser.mockResolvedValue({
-        id: 'list-1',
-        user_id: 'user-1',
-        name: 'My List',
-        location: null,
-        created_at: new Date(),
-      });
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
       const fkError = new Prisma.PrismaClientKnownRequestError('FK violation', {
         code: 'P2003',
         clientVersion: '0.0.0',
@@ -148,25 +215,49 @@ describe('ItemsService', () => {
   });
 
   describe('update', () => {
-    const mockUpdatedItem = {
-      id: 'item-1',
-      list_id: 'list-1',
-      name: 'Updated',
-      description: null,
-      quantity: 1,
-      category_id: null,
-      category: null,
-      user_defined_value: null,
-      created_at: new Date(),
-    };
+    const mockUpdatedItem = makeItem({ name: 'Updated' });
 
     it('returns the updated item when found', async () => {
-      itemsRepository.update.mockResolvedValue(mockUpdatedItem);
+      itemsRepository.update.mockResolvedValue(mockUpdatedItem as any);
 
       const result = await service.update('item-1', 'user-1', { name: 'Updated' });
 
-      expect(itemsRepository.update).toHaveBeenCalledWith('item-1', 'user-1', { name: 'Updated' });
+      expect(itemsRepository.update).toHaveBeenCalledWith(
+        'item-1',
+        'user-1',
+        { name: 'Updated' },
+        undefined,
+      );
       expect(result).toMatchObject({ id: 'item-1', name: 'Updated', category: null, images: [] });
+    });
+
+    it('uploads new image and replaces main image record', async () => {
+      storageService.upload.mockResolvedValue('https://cdn.example.com/items/item-1/new.jpg');
+      const itemWithNewImage = makeItem({
+        name: 'Updated',
+        images: [
+          {
+            id: 'img-2',
+            item_id: 'item-1',
+            url: 'https://cdn.example.com/items/item-1/new.jpg',
+            storage_key: 'items/item-1/new.jpg',
+            is_main: true,
+            created_at: new Date(),
+          },
+        ],
+      });
+      itemsRepository.update.mockResolvedValue(itemWithNewImage as any);
+
+      const result = await service.update('item-1', 'user-1', { name: 'Updated' }, fakeImageFile());
+
+      expect(storageService.upload).toHaveBeenCalledTimes(1);
+      expect(itemsRepository.update).toHaveBeenCalledWith(
+        'item-1',
+        'user-1',
+        { name: 'Updated' },
+        expect.objectContaining({ isMain: true }),
+      );
+      expect(result.images[0].is_main).toBe(true);
     });
 
     it('throws NotFoundException when item not found or not owned', async () => {
@@ -209,20 +300,7 @@ describe('ItemsService', () => {
   describe('search', () => {
     it('delegates to repository with userId and query and returns mapped response', async () => {
       const createdAt = new Date();
-      const items = [
-        {
-          id: 'item-1',
-          list_id: 'list-1',
-          name: 'vintage lamp',
-          description: null,
-          quantity: 1,
-          category_id: null,
-          category: null,
-          user_defined_value: null,
-          created_at: createdAt,
-        },
-      ];
-      itemsRepository.searchByUser.mockResolvedValue(items);
+      itemsRepository.searchByUser.mockResolvedValue([makeItem({ created_at: createdAt })] as any);
 
       const result = await service.search('user-1', 'lamp');
 
@@ -230,7 +308,7 @@ describe('ItemsService', () => {
       expect(result).toEqual([
         {
           id: 'item-1',
-          name: 'vintage lamp',
+          name: 'My Item',
           description: null,
           quantity: 1,
           user_defined_value: null,
@@ -242,20 +320,9 @@ describe('ItemsService', () => {
     });
 
     it('converts user_defined_value Decimal to number in search results', async () => {
-      const createdAt = new Date();
       itemsRepository.searchByUser.mockResolvedValue([
-        {
-          id: 'item-1',
-          list_id: 'list-1',
-          name: 'lamp',
-          description: null,
-          quantity: 1,
-          category_id: null,
-          category: null,
-          user_defined_value: { valueOf: () => 5.5 } as any,
-          created_at: createdAt,
-        },
-      ]);
+        makeItem({ user_defined_value: { valueOf: () => 5.5 } as any }),
+      ] as any);
 
       const result = await service.search('user-1', 'lamp');
 
@@ -272,25 +339,8 @@ describe('ItemsService', () => {
   });
 
   describe('getByList', () => {
-    const mockList = {
-      id: 'list-1',
-      user_id: 'user-1',
-      name: 'My List',
-      location: null,
-      created_at: new Date(),
-    };
-    const makeItem = (id: string, createdAt = new Date()) => ({
-      id,
-      list_id: 'list-1',
-      name: `Item ${id}`,
-      description: null,
-      quantity: 1,
-      location: null,
-      category_id: null,
-      category: null,
-      user_defined_value: null,
-      created_at: createdAt,
-    });
+    const makeListItem = (id: string, createdAt = new Date()) =>
+      makeItem({ id, list_id: 'list-1', name: `Item ${id}`, created_at: createdAt });
 
     it('throws NotFoundException when list does not belong to caller', async () => {
       listsRepository.findOneByUser.mockResolvedValue(null);
@@ -301,8 +351,8 @@ describe('ItemsService', () => {
 
     it('returns first page with nextCursor set when more items exist', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
-      const rows = Array.from({ length: 21 }, (_, i) => makeItem(`item-${i}`));
-      itemsRepository.findByList.mockResolvedValue(rows);
+      const rows = Array.from({ length: 21 }, (_, i) => makeListItem(`item-${i}`));
+      itemsRepository.findByList.mockResolvedValue(rows as any);
 
       const result = await service.getByList('list-1', 'user-1', undefined, 20);
 
@@ -313,8 +363,10 @@ describe('ItemsService', () => {
 
     it('returns last page with nextCursor null when no more items', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
-      const rows = [makeItem('item-1'), makeItem('item-2')];
-      itemsRepository.findByList.mockResolvedValue(rows);
+      itemsRepository.findByList.mockResolvedValue([
+        makeListItem('item-1'),
+        makeListItem('item-2'),
+      ] as any);
 
       const result = await service.getByList('list-1', 'user-1', 'cursor-id', 20);
 
@@ -334,7 +386,7 @@ describe('ItemsService', () => {
 
     it('passes cursor to repository when provided', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
-      itemsRepository.findByList.mockResolvedValue([makeItem('item-5')]);
+      itemsRepository.findByList.mockResolvedValue([makeListItem('item-5')] as any);
 
       await service.getByList('list-1', 'user-1', 'cursor-abc', 10);
 
@@ -344,8 +396,8 @@ describe('ItemsService', () => {
     it('converts user_defined_value Decimal to number', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
       itemsRepository.findByList.mockResolvedValue([
-        { ...makeItem('item-1'), user_defined_value: { valueOf: () => 12.5 } as any },
-      ]);
+        makeItem({ user_defined_value: { valueOf: () => 12.5 } as any }),
+      ] as any);
 
       const result = await service.getByList('list-1', 'user-1');
 

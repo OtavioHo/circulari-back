@@ -62,9 +62,23 @@ model Item {
   user_defined_value Decimal?
   created_at         DateTime @default(now()) @map("created_at")
 
-  list     List      @relation(fields: [list_id], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  list     List        @relation(fields: [list_id], references: [id], onDelete: Cascade)
+  category Category?   @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  images   ItemImage[]
 
   @@index([list_id])
   @@map("items")
+}
+
+model ItemImage {
+  id          String   @id @default(uuid())
+  item_id     String
+  item        Item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  url         String
+  storage_key String
+  is_main     Boolean  @default(false)
+  created_at  DateTime @default(now()) @map("created_at")
+
+  @@index([item_id])
+  @@map("item_images")
 }

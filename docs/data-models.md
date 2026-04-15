@@ -51,5 +51,8 @@ Global reference data — seeded on `prisma:seed`, no CRUD endpoints exposed.
 | Field | Type | Notes |
 |-------|------|-------|
 | id | uuid | PK |
-| item_id | uuid | FK → items |
+| item_id | uuid | FK → items, cascades on delete |
 | url | string | S3/R2 public URL |
+| storage_key | string | Object storage key (e.g. `items/{itemId}/{uuid}.jpg`); retained for future deletion |
+| is_main | boolean | True for the item's primary display image; default false |
+| created_at | timestamp | |

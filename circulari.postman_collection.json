@@ -381,17 +381,51 @@
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "Authorization",
                 "value": "Bearer {{accessToken}}"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"list_id\": \"<list-id>\",\n  \"name\": \"Vintage Lamp\",\n  \"description\": \"Brass floor lamp from the 1960s\",\n  \"quantity\": 1,\n  \"user_defined_value\": 85.0,\n  \"category_id\": \"<category-id>\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "list_id",
+                  "value": "<list-id>",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "Vintage Lamp",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Brass floor lamp from the 1960s",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "user_defined_value",
+                  "value": "85.0",
+                  "type": "text"
+                },
+                {
+                  "key": "category_id",
+                  "value": "<category-id>",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/image.jpg",
+                  "description": "Optional main image (JPEG, PNG, WebP, GIF — max 10 MB)",
+                  "disabled": true
+                }
+              ]
             },
             "url": {
               "raw": "{{baseUrl}}/items",
@@ -410,17 +444,36 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "Authorization",
                 "value": "Bearer {{accessToken}}"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Lamp\",\n  \"quantity\": 2,\n  \"category_id\": \"<category-id>\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Updated Lamp",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "category_id",
+                  "value": "<category-id>",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/new-image.jpg",
+                  "description": "Optional replacement main image (JPEG, PNG, WebP, GIF — max 10 MB)",
+                  "disabled": true
+                }
+              ]
             },
             "url": {
               "raw": "{{baseUrl}}/items/:id",
