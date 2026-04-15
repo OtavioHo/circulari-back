@@ -2,7 +2,7 @@
   "name": "circulari",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "node -e \"if(process.env.DATABASE_URL) require('child_process').execSync('prisma generate', {stdio:'inherit'})\"",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
