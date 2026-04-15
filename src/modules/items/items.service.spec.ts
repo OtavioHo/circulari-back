@@ -83,6 +83,7 @@ describe('ItemsService', () => {
             delete: jest.fn(),
             searchByUser: jest.fn(),
             findByList: jest.fn(),
+            findAllCategories: jest.fn(),
           },
         },
         {
@@ -182,7 +183,9 @@ describe('ItemsService', () => {
     it('includes category object in response when category_id is provided', async () => {
       const category = { id: '00000000-0000-0000-0000-000000000001', name: 'Eletrônicos' };
       listsRepository.findOneByUser.mockResolvedValue(mockList);
-      itemsRepository.create.mockResolvedValue(makeItem({ category_id: category.id, category }) as any);
+      itemsRepository.create.mockResolvedValue(
+        makeItem({ category_id: category.id, category }) as any,
+      );
 
       const result = await service.create('user-1', { ...dto, category_id: category.id });
 
@@ -305,7 +308,9 @@ describe('ItemsService', () => {
   describe('search', () => {
     it('delegates to repository with userId and query and returns mapped response', async () => {
       const createdAt = new Date();
-      itemsRepository.searchByUser.mockResolvedValue([makeItem({ name: 'vintage lamp', created_at: createdAt })] as any);
+      itemsRepository.searchByUser.mockResolvedValue([
+        makeItem({ name: 'vintage lamp', created_at: createdAt }),
+      ] as any);
 
       const result = await service.search('user-1', 'lamp');
 
@@ -338,6 +343,29 @@ describe('ItemsService', () => {
       itemsRepository.searchByUser.mockResolvedValue([]);
 
       const result = await service.search('user-1', 'nonexistent');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('findAllCategories', () => {
+    it('delegates to repository and returns result as-is', async () => {
+      const categories = [
+        { id: 'cat-1', name: 'Eletrônicos' },
+        { id: 'cat-2', name: 'Móveis' },
+      ];
+      itemsRepository.findAllCategories.mockResolvedValue(categories as any);
+
+      const result = await service.findAllCategories();
+
+      expect(itemsRepository.findAllCategories).toHaveBeenCalledTimes(1);
+      expect(result).toBe(categories);
+    });
+
+    it('returns empty array when no categories exist', async () => {
+      itemsRepository.findAllCategories.mockResolvedValue([]);
+
+      const result = await service.findAllCategories();
 
       expect(result).toEqual([]);
     });

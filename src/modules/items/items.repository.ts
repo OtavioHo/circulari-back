@@ -96,6 +96,10 @@ export class ItemsRepository {
     return result.count;
   }
 
+  findAllCategories() {
+    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+  }
+
   searchByUser(userId: string, search: string) {
     return this.prisma.item.findMany({
       where: {

@@ -144,7 +144,20 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 }
 ```
 
-> **Categories** are read-only reference data. No `GET /categories` endpoint is exposed — seed the DB with `npm run prisma:seed` to populate them. Use a seeded category's `id` as `category_id` in item requests.
+---
+
+## Categories <Badge type="tip" text="Implemented" />
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /categories | List all categories ordered alphabetically |
+
+```json
+// GET /categories — response 200
+[{ "id": "uuid", "name": "string" }]
+```
+
+> All routes require JWT authentication. Seed categories with `npm run prisma:seed`.
 
 ---
 

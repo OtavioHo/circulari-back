@@ -130,6 +130,10 @@ export class ItemsService {
     }
   }
 
+  findAllCategories() {
+    return this.repository.findAllCategories();
+  }
+
   async search(userId: string, query: string) {
     const items = await this.repository.searchByUser(userId, query);
     return items.map((item) => this.mapItem(item));
