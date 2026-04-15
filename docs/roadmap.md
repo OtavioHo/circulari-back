@@ -32,12 +32,12 @@
 - [x] Return suggestions to client (`name`, `category`, `price_min`, `price_max`)
 - [x] Error response when AI fails (client falls back to manual entry)
 
-## Milestone 5 — Dashboard + Search <Badge type="danger" text="Not Implemented" />
+## Milestone 5 — Dashboard + Search <Badge type="warning" text="In Progress" />
 
-- [ ] Per-list total value calculation
+- [x] Per-list total value calculation
 - [ ] Global total value
 - [ ] Dashboard endpoint (list count, item count, total value)
-- [ ] Full-text search on item names
+- [x] Full-text search on item names
 
 ## Milestone 6 — Monetization <Badge type="danger" text="Not Implemented" />
 

@@ -27,5 +27,5 @@ hero:
 | Items CRUD | <Badge type="tip" text="Implemented" /> |
 | Image upload + storage | <Badge type="tip" text="Implemented" /> |
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
-| Dashboard + search | <Badge type="danger" text="Not Implemented" /> |
+| Dashboard + search | <Badge type="warning" text="In Progress" /> |
 | Monetization tiers | <Badge type="danger" text="Not Implemented" /> |
