@@ -167,8 +167,8 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "price_min": 0,
   "price_max": 0
 }
-// category: name matched from seeded category list, or null if none fit
-// category_id: UUID of the matched category, or null
+// category: seeded category name when matched; null when no seeded match exists
+// category_id: UUID of the matched seeded category, or null when no seeded match exists
 // description: one-paragraph item description in Portuguese (Brazil)
 ```
 

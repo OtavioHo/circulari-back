@@ -36,7 +36,7 @@ Analyze the image and return a JSON object with the following fields:
 - price_max: maximum market value in BRL (number)
 
 Return only valid JSON, no explanation:
-{ "name": "", "category": "", "description": "", "price_min": 0, "price_max": 0 }
+{ "name": "", "category": null, "description": "", "price_min": 0, "price_max": 0 }
 ```
 
 ## Category Matching

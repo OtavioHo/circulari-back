@@ -4,16 +4,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import OpenAI from 'openai';
 
 function buildPrompt(categoryNames: string[]): string {
-  const list = categoryNames.join(', ');
+  const list = JSON.stringify(categoryNames);
   return `Analyze the image and return a JSON object with the following fields:
 - name: item name in Portuguese (Brazil)
-- category: pick the single most fitting category from this list, or null if none fit: [${list}]
+- category: pick the single most fitting category from this list, or null if none fit: ${list}
 - description: brief item description in one paragraph, in Portuguese (Brazil)
 - price_min: minimum market value in BRL (number)
 - price_max: maximum market value in BRL (number)
 
 Return only valid JSON, no explanation:
-{ "name": "", "category": "", "description": "", "price_min": 0, "price_max": 0 }`;
+{ "name": "", "category": null, "description": "", "price_min": 0, "price_max": 0 }`;
 }
 
 export interface AnalyzeResult {
@@ -94,7 +94,7 @@ export class AiService {
         ? categories.find((c) => c.name.toLowerCase() === categoryRaw.toLowerCase())
         : undefined;
 
-      const category = matched ? matched.name : categoryRaw;
+      const category = matched ? matched.name : null;
       const category_id = matched ? matched.id : null;
 
       const result: AnalyzeResult = {

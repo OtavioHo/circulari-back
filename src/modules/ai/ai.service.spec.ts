@@ -108,7 +108,7 @@ describe('AiService', () => {
       expect(result.category_id).toBeNull();
     });
 
-    it('sets category_id to null when AI returns an unrecognized category name', async () => {
+    it('sets category and category_id to null when AI returns an unrecognized category name', async () => {
       const payload = {
         name: 'Item X',
         category: 'CategoriaDesconhecida',
@@ -120,7 +120,7 @@ describe('AiService', () => {
 
       const result = await service.analyze(fakeBuffer, fakeMime);
 
-      expect(result.category).toBe('CategoriaDesconhecida');
+      expect(result.category).toBeNull();
       expect(result.category_id).toBeNull();
     });
 
