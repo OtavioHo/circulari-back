@@ -40,10 +40,19 @@ export class AiService {
   }
 
   async analyze(imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
-    try {
-      const categories = await this.prisma.category.findMany({ select: { id: true, name: true } });
-      const categoryNames = categories.map((c) => c.name);
+    let categories: Array<{ id: string; name: string }>;
 
+    try {
+      categories = await this.prisma.category.findMany({ select: { id: true, name: true } });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Category lookup failed: ${message}`, err instanceof Error ? err.stack : undefined);
+      throw new ServiceUnavailableException('Category lookup failed');
+    }
+
+    const categoryNames = categories.map((c) => c.name);
+
+    try {
       const base64 = imageBuffer.toString('base64');
       const dataUrl = `data:${mimetype};base64,${base64}`;
 
