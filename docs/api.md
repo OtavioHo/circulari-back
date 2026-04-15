@@ -76,6 +76,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
       "description": "string | null",
       "quantity": 1,
       "user_defined_value": 0,
+      "category": { "id": "uuid", "name": "string" },
       "images": [],
       "created_at": "timestamp"
     }
@@ -105,6 +106,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "name": "string",
   "description": "string",   // optional
   "quantity": 1,             // optional, min 1
+  "category_id": "uuid",     // optional
   "user_defined_value": 0    // optional
 }
 
@@ -115,6 +117,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "description": "string",
   "quantity": 1,
   "user_defined_value": 0,
+  "category": { "id": "uuid", "name": "string" },  // or null
   "images": [],
   "created_at": "timestamp"
 }
@@ -124,6 +127,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "name": "string",
   "description": "string",
   "quantity": 1,
+  "category_id": "uuid",
   "user_defined_value": 0
 }
 
@@ -134,10 +138,13 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "description": "string | null",
   "quantity": 1,
   "user_defined_value": "number | null",
+  "category": { "id": "uuid", "name": "string" },  // or null
   "images": [],
   "created_at": "timestamp"
 }
 ```
+
+> **Categories** are read-only reference data. Use `GET /categories` is not exposed — seed the DB with `npm run prisma:seed` to populate them. Use a seeded category's `id` as `category_id` in item requests.
 
 ---
 

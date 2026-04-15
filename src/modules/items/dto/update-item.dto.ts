@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class UpdateItemDto {
   @IsString()
@@ -20,4 +20,8 @@ export class UpdateItemDto {
   @IsNumber()
   @IsOptional()
   user_defined_value?: number;
+
+  @IsUUID()
+  @IsOptional()
+  category_id?: string;
 }

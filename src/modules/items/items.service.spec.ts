@@ -46,6 +46,8 @@ describe('ItemsService', () => {
       name: 'My Item',
       description: null,
       quantity: 1,
+      category_id: null,
+      category: null,
       user_defined_value: null,
       created_at: new Date('2026-01-01'),
     };
@@ -70,6 +72,7 @@ describe('ItemsService', () => {
         description: null,
         quantity: 1,
         user_defined_value: null,
+        category: null,
         images: [],
         created_at: new Date('2026-01-01'),
       });
@@ -80,6 +83,22 @@ describe('ItemsService', () => {
 
       await expect(service.create('user-1', dto)).rejects.toThrow(NotFoundException);
       expect(itemsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('includes category object in response when category_id is provided', async () => {
+      const category = { id: 'cat-1', name: 'Eletrônicos' };
+      listsRepository.findOneByUser.mockResolvedValue({
+        id: 'list-1',
+        user_id: 'user-1',
+        name: 'My List',
+        location: null,
+        created_at: new Date(),
+      });
+      itemsRepository.create.mockResolvedValue({ ...mockItem, category_id: 'cat-1', category });
+
+      const result = await service.create('user-1', { ...dto, category_id: 'cat-1' });
+
+      expect(result.category).toEqual(category);
     });
 
     it('converts user_defined_value Decimal to number in response', async () => {
@@ -108,6 +127,8 @@ describe('ItemsService', () => {
       name: 'Updated',
       description: null,
       quantity: 1,
+      category_id: null,
+      category: null,
       user_defined_value: null,
       created_at: new Date(),
     };
@@ -118,7 +139,7 @@ describe('ItemsService', () => {
       const result = await service.update('item-1', 'user-1', { name: 'Updated' });
 
       expect(itemsRepository.update).toHaveBeenCalledWith('item-1', 'user-1', { name: 'Updated' });
-      expect(result).toMatchObject({ id: 'item-1', name: 'Updated', images: [] });
+      expect(result).toMatchObject({ id: 'item-1', name: 'Updated', category: null, images: [] });
     });
 
     it('throws NotFoundException when item not found or not owned', async () => {
@@ -156,6 +177,8 @@ describe('ItemsService', () => {
           name: 'vintage lamp',
           description: null,
           quantity: 1,
+          category_id: null,
+          category: null,
           user_defined_value: null,
           created_at: createdAt,
         },
@@ -172,6 +195,7 @@ describe('ItemsService', () => {
           description: null,
           quantity: 1,
           user_defined_value: null,
+          category: null,
           images: [],
           created_at: createdAt,
         },
@@ -187,6 +211,8 @@ describe('ItemsService', () => {
           name: 'lamp',
           description: null,
           quantity: 1,
+          category_id: null,
+          category: null,
           user_defined_value: { valueOf: () => 5.5 } as any,
           created_at: createdAt,
         },
@@ -207,7 +233,13 @@ describe('ItemsService', () => {
   });
 
   describe('getByList', () => {
-    const mockList = { id: 'list-1', user_id: 'user-1', name: 'My List', location: null, created_at: new Date() };
+    const mockList = {
+      id: 'list-1',
+      user_id: 'user-1',
+      name: 'My List',
+      location: null,
+      created_at: new Date(),
+    };
     const makeItem = (id: string, createdAt = new Date()) => ({
       id,
       list_id: 'list-1',
@@ -215,6 +247,8 @@ describe('ItemsService', () => {
       description: null,
       quantity: 1,
       location: null,
+      category_id: null,
+      category: null,
       user_defined_value: null,
       created_at: createdAt,
     });

@@ -23,6 +23,7 @@ export class ItemsService {
       description: item.description,
       quantity: item.quantity,
       user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
+      category: item.category ?? null,
       images: [],
       created_at: item.created_at,
     };
@@ -39,6 +40,7 @@ export class ItemsService {
       description: item.description,
       quantity: item.quantity,
       user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
+      category: item.category ?? null,
       images: [],
       created_at: item.created_at,
     };
@@ -59,6 +61,7 @@ export class ItemsService {
       description: item.description,
       quantity: item.quantity,
       user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
+      category: item.category ?? null,
       images: [],
       created_at: item.created_at,
     }));
@@ -83,6 +86,7 @@ export class ItemsService {
         quantity: item.quantity,
         user_defined_value:
           item.user_defined_value != null ? Number(item.user_defined_value) : null,
+        category: item.category ?? null,
         images: [],
         created_at: item.created_at,
       })),

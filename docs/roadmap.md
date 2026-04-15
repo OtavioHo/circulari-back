@@ -16,6 +16,7 @@
 - [x] Refactor location from separate entity to plain `location` string on List
 - [x] Global item search (`GET /items?search=`)
 - [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
+- [x] Category reference table with seeded Portuguese values; `category_id` on items
 
 ## Milestone 3 — Image Upload + Storage <Badge type="warning" text="In Progress" />
 
