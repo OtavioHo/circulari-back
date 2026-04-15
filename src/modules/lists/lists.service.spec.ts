@@ -56,6 +56,7 @@ describe('ListsService', () => {
       expect(result[0].total_value).toBe(15.5);
       expect(result[0].id).toBe('list-1');
       expect(result[0].name).toBe('My List');
+      expect(result[0].location).toBeNull();
     });
 
     it('passes through zero total_value from repository', async () => {

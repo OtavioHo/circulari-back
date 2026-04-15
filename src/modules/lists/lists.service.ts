@@ -12,6 +12,7 @@ export class ListsService {
     return lists.map((list) => ({
       id: list.id,
       name: list.name,
+      location: list.location ?? null,
       item_count: list._count.items,
       total_value: list.total_value,
       created_at: list.created_at,
