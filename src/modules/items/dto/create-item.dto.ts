@@ -25,6 +25,10 @@ export class CreateItemDto {
   @IsOptional()
   user_defined_value?: number;
 
+  @IsUUID()
+  @IsOptional()
+  category_id?: string;
+
   @IsOptional()
   image?: unknown;
 }

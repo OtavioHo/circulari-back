@@ -303,7 +303,7 @@
                 {
                   "key": "limit",
                   "value": "20",
-                  "description": "Page size (1\u2013100, default 20)"
+                  "description": "Page size (1–100, default 20)"
                 }
               ],
               "variable": [
@@ -391,7 +391,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"list_id\": \"<list-id>\",\n  \"name\": \"Vintage Lamp\",\n  \"description\": \"Brass floor lamp from the 1960s\",\n  \"quantity\": 1,\n  \"user_defined_value\": 85.00\n}"
+              "raw": "{\n  \"list_id\": \"<list-id>\",\n  \"name\": \"Vintage Lamp\",\n  \"description\": \"Brass floor lamp from the 1960s\",\n  \"quantity\": 1,\n  \"user_defined_value\": 85.0,\n  \"category_id\": \"<category-id>\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/items",
@@ -420,7 +420,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Lamp\",\n  \"quantity\": 2\n}"
+              "raw": "{\n  \"name\": \"Updated Lamp\",\n  \"quantity\": 2,\n  \"category_id\": \"<category-id>\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/items/:id",
@@ -490,7 +490,7 @@
                   "key": "image",
                   "type": "file",
                   "src": "/path/to/image.jpg",
-                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF \u2014 max 10 MB)"
+                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF — max 10 MB)"
                 }
               ]
             },

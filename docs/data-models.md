@@ -33,8 +33,18 @@
 | name | string | AI-suggested or user-defined |
 | description | string | nullable |
 | quantity | integer | default 1 |
+| category_id | uuid | FK → categories, nullable; set to null when category deleted |
 | user_defined_value | decimal | user override; AI price used if null |
 | created_at | timestamp | |
+
+## Category
+
+Global reference data — seeded on `prisma:seed`, no CRUD endpoints exposed.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| name | string | unique; e.g. "Eletrônicos", "Roupas e Acessórios" |
 
 ## ItemImage
 

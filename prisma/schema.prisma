@@ -44,16 +44,26 @@ model List {
   @@map("lists")
 }
 
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  items Item[]
+
+  @@map("categories")
+}
+
 model Item {
   id                 String   @id @default(uuid())
   list_id            String
   name               String
   description        String?
   quantity           Int      @default(1)
+  category_id        String?
   user_defined_value Decimal?
   created_at         DateTime @default(now()) @map("created_at")
 
-  list List @relation(fields: [list_id], references: [id], onDelete: Cascade)
+  list     List      @relation(fields: [list_id], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
 
   @@index([list_id])
   @@map("items")
