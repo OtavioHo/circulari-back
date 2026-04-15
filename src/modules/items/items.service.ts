@@ -12,20 +12,19 @@ export class ItemsService {
     private readonly listsRepository: ListsRepository,
   ) {}
 
+  private rethrowFkError(err: unknown): never {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+      throw new BadRequestException('Invalid category_id: category not found');
+    }
+    throw err;
+  }
+
   async create(userId: string, dto: CreateItemDto) {
     const list = await this.listsRepository.findOneByUser(dto.list_id, userId);
     if (!list) {
       throw new NotFoundException('List not found');
     }
-    let item: Awaited<ReturnType<typeof this.repository.create>>;
-    try {
-      item = await this.repository.create(dto);
-    } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
-        throw new BadRequestException('Invalid category_id: category not found');
-      }
-      throw err;
-    }
+    const item = await this.repository.create(dto).catch((err) => this.rethrowFkError(err));
     return {
       id: item.id,
       name: item.name,
@@ -39,15 +38,9 @@ export class ItemsService {
   }
 
   async update(id: string, userId: string, dto: UpdateItemDto) {
-    let item: Awaited<ReturnType<typeof this.repository.update>>;
-    try {
-      item = await this.repository.update(id, userId, dto);
-    } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
-        throw new BadRequestException('Invalid category_id: category not found');
-      }
-      throw err;
-    }
+    const item = await this.repository
+      .update(id, userId, dto)
+      .catch((err) => this.rethrowFkError(err));
     if (!item) {
       throw new NotFoundException('Item not found');
     }
