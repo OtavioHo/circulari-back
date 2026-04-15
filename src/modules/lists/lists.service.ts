@@ -12,6 +12,7 @@ export class ListsService {
     return lists.map((list) => ({
       id: list.id,
       name: list.name,
+      location: list.location ?? null,
       item_count: list._count.items,
       total_value: list.total_value,
       created_at: list.created_at,
@@ -19,10 +20,11 @@ export class ListsService {
   }
 
   async create(userId: string, dto: CreateListDto) {
-    const list = await this.repository.create(userId, dto.name);
+    const list = await this.repository.create(userId, dto);
     return {
       id: list.id,
       name: list.name,
+      location: list.location ?? null,
       item_count: 0,
       total_value: 0,
       created_at: list.created_at,
@@ -30,13 +32,14 @@ export class ListsService {
   }
 
   async rename(id: string, userId: string, dto: UpdateListDto) {
-    const list = await this.repository.update(id, userId, dto.name);
+    const list = await this.repository.update(id, userId, dto);
     if (!list) {
       throw new NotFoundException('List not found');
     }
     return {
       id: list.id,
       name: list.name,
+      location: list.location ?? null,
       created_at: list.created_at,
     };
   }

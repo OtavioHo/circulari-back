@@ -46,7 +46,6 @@ describe('ItemsService', () => {
       name: 'My Item',
       description: null,
       quantity: 1,
-      location_id: null,
       user_defined_value: null,
       created_at: new Date('2026-01-01'),
     };
@@ -56,6 +55,7 @@ describe('ItemsService', () => {
         id: 'list-1',
         user_id: 'user-1',
         name: 'My List',
+        location: null,
         created_at: new Date(),
       });
       itemsRepository.create.mockResolvedValue(mockItem);
@@ -87,6 +87,7 @@ describe('ItemsService', () => {
         id: 'list-1',
         user_id: 'user-1',
         name: 'My List',
+        location: null,
         created_at: new Date(),
       });
       itemsRepository.create.mockResolvedValue({
@@ -107,7 +108,6 @@ describe('ItemsService', () => {
       name: 'Updated',
       description: null,
       quantity: 1,
-      location_id: null,
       user_defined_value: null,
       created_at: new Date(),
     };
@@ -156,7 +156,6 @@ describe('ItemsService', () => {
           name: 'vintage lamp',
           description: null,
           quantity: 1,
-          location_id: null,
           user_defined_value: null,
           created_at: createdAt,
         },
@@ -188,7 +187,6 @@ describe('ItemsService', () => {
           name: 'lamp',
           description: null,
           quantity: 1,
-          location_id: null,
           user_defined_value: { valueOf: () => 5.5 } as any,
           created_at: createdAt,
         },
@@ -209,14 +207,13 @@ describe('ItemsService', () => {
   });
 
   describe('getByList', () => {
-    const mockList = { id: 'list-1', user_id: 'user-1', name: 'My List', created_at: new Date() };
+    const mockList = { id: 'list-1', user_id: 'user-1', name: 'My List', location: null, created_at: new Date() };
     const makeItem = (id: string, createdAt = new Date()) => ({
       id,
       list_id: 'list-1',
       name: `Item ${id}`,
       description: null,
       quantity: 1,
-      location_id: null,
       location: null,
       user_defined_value: null,
       created_at: createdAt,

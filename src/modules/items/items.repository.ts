@@ -14,7 +14,6 @@ export class ItemsRepository {
         name: dto.name,
         description: dto.description,
         quantity: dto.quantity ?? 1,
-        location_id: dto.location_id,
         user_defined_value: dto.user_defined_value,
       },
     });
@@ -33,7 +32,6 @@ export class ItemsRepository {
         ...(dto.name != null && { name: dto.name }),
         ...(dto.description != null && { description: dto.description }),
         ...(dto.quantity != null && { quantity: dto.quantity }),
-        ...(dto.location_id != null && { location_id: dto.location_id }),
         ...(dto.user_defined_value != null && {
           user_defined_value: dto.user_defined_value,
         }),

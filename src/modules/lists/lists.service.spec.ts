@@ -41,6 +41,7 @@ describe('ListsService', () => {
         {
           id: 'list-1',
           name: 'My List',
+          location: null,
           user_id: 'user-1',
           created_at: new Date('2026-01-01'),
           _count: { items: 2 },
@@ -55,6 +56,7 @@ describe('ListsService', () => {
       expect(result[0].total_value).toBe(15.5);
       expect(result[0].id).toBe('list-1');
       expect(result[0].name).toBe('My List');
+      expect(result[0].location).toBeNull();
     });
 
     it('passes through zero total_value from repository', async () => {
@@ -62,6 +64,7 @@ describe('ListsService', () => {
         {
           id: 'list-1',
           name: 'My List',
+          location: null,
           user_id: 'user-1',
           created_at: new Date('2026-01-01'),
           _count: { items: 0 },
@@ -80,20 +83,40 @@ describe('ListsService', () => {
       repository.create.mockResolvedValue({
         id: 'list-1',
         name: 'New List',
+        location: null,
         user_id: 'user-1',
         created_at: new Date('2026-01-01'),
       });
 
       const result = await service.create('user-1', { name: 'New List' });
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', 'New List');
+      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' });
       expect(result).toEqual({
         id: 'list-1',
         name: 'New List',
+        location: null,
         item_count: 0,
         total_value: 0,
         created_at: new Date('2026-01-01'),
       });
+    });
+
+    it('includes location when provided', async () => {
+      repository.create.mockResolvedValue({
+        id: 'list-2',
+        name: 'Garage',
+        location: '123 Main St',
+        user_id: 'user-1',
+        created_at: new Date('2026-01-01'),
+      });
+
+      const result = await service.create('user-1', { name: 'Garage', location: '123 Main St' });
+
+      expect(repository.create).toHaveBeenCalledWith('user-1', {
+        name: 'Garage',
+        location: '123 Main St',
+      });
+      expect(result.location).toBe('123 Main St');
     });
   });
 
@@ -103,13 +126,35 @@ describe('ListsService', () => {
         id: 'list-1',
         user_id: 'user-1',
         name: 'Updated Name',
+        location: null,
         created_at: new Date('2026-01-01'),
       });
 
       const result = await service.rename('list-1', 'user-1', { name: 'Updated Name' });
 
-      expect(repository.update).toHaveBeenCalledWith('list-1', 'user-1', 'Updated Name');
-      expect(result).toMatchObject({ id: 'list-1', name: 'Updated Name' });
+      expect(repository.update).toHaveBeenCalledWith('list-1', 'user-1', { name: 'Updated Name' });
+      expect(result).toMatchObject({ id: 'list-1', name: 'Updated Name', location: null });
+    });
+
+    it('returns the updated location when provided', async () => {
+      repository.update.mockResolvedValue({
+        id: 'list-1',
+        user_id: 'user-1',
+        name: 'My List',
+        location: '456 Oak Ave',
+        created_at: new Date('2026-01-01'),
+      });
+
+      const result = await service.rename('list-1', 'user-1', {
+        name: 'My List',
+        location: '456 Oak Ave',
+      });
+
+      expect(repository.update).toHaveBeenCalledWith('list-1', 'user-1', {
+        name: 'My List',
+        location: '456 Oak Ave',
+      });
+      expect(result.location).toBe('456 Oak Ave');
     });
 
     it('throws NotFoundException when list not found or not owned', async () => {

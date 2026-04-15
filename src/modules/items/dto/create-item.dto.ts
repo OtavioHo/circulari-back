@@ -20,10 +20,6 @@ export class CreateItemDto {
   @IsOptional()
   quantity?: number;
 
-  @IsUUID()
-  @IsOptional()
-  location_id?: string;
-
   @Type(() => Number)
   @IsNumber()
   @IsOptional()

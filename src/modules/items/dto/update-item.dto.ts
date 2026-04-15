@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateItemDto {
   @IsString()
@@ -15,10 +15,6 @@ export class UpdateItemDto {
   @Min(1)
   @IsOptional()
   quantity?: number;
-
-  @IsUUID()
-  @IsOptional()
-  location_id?: string;
 
   @Type(() => Number)
   @IsNumber()
