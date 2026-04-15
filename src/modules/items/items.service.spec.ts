@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { ItemsRepository } from './items.repository';
 import { ListsRepository } from '../lists/lists.repository';
+import { Prisma } from '../../generated/prisma/client';
 
 describe('ItemsService', () => {
   let service: ItemsService;
@@ -86,7 +87,7 @@ describe('ItemsService', () => {
     });
 
     it('includes category object in response when category_id is provided', async () => {
-      const category = { id: 'cat-1', name: 'Eletrônicos' };
+      const category = { id: '00000000-0000-0000-0000-000000000001', name: 'Eletrônicos' };
       listsRepository.findOneByUser.mockResolvedValue({
         id: 'list-1',
         user_id: 'user-1',
@@ -94,9 +95,16 @@ describe('ItemsService', () => {
         location: null,
         created_at: new Date(),
       });
-      itemsRepository.create.mockResolvedValue({ ...mockItem, category_id: 'cat-1', category });
+      itemsRepository.create.mockResolvedValue({
+        ...mockItem,
+        category_id: '00000000-0000-0000-0000-000000000001',
+        category,
+      });
 
-      const result = await service.create('user-1', { ...dto, category_id: 'cat-1' });
+      const result = await service.create('user-1', {
+        ...dto,
+        category_id: '00000000-0000-0000-0000-000000000001',
+      });
 
       expect(result.category).toEqual(category);
     });
@@ -117,6 +125,25 @@ describe('ItemsService', () => {
       const result = await service.create('user-1', { ...dto, user_defined_value: 9.99 });
 
       expect(result.user_defined_value).toBe(9.99);
+    });
+
+    it('throws BadRequestException when category_id does not exist (P2003)', async () => {
+      listsRepository.findOneByUser.mockResolvedValue({
+        id: 'list-1',
+        user_id: 'user-1',
+        name: 'My List',
+        location: null,
+        created_at: new Date(),
+      });
+      const fkError = new Prisma.PrismaClientKnownRequestError('FK violation', {
+        code: 'P2003',
+        clientVersion: '0.0.0',
+      });
+      itemsRepository.create.mockRejectedValue(fkError);
+
+      await expect(
+        service.create('user-1', { ...dto, category_id: '00000000-0000-0000-0000-000000000099' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -148,6 +175,18 @@ describe('ItemsService', () => {
       await expect(service.update('item-999', 'user-1', { name: 'x' })).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('throws BadRequestException when category_id does not exist (P2003)', async () => {
+      const fkError = new Prisma.PrismaClientKnownRequestError('FK violation', {
+        code: 'P2003',
+        clientVersion: '0.0.0',
+      });
+      itemsRepository.update.mockRejectedValue(fkError);
+
+      await expect(
+        service.update('item-1', 'user-1', { category_id: '00000000-0000-0000-0000-000000000099' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

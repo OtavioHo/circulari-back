@@ -35,7 +35,7 @@ export class ItemsRepository {
         ...(dto.name != null && { name: dto.name }),
         ...(dto.description != null && { description: dto.description }),
         ...(dto.quantity != null && { quantity: dto.quantity }),
-        ...(dto.category_id != null && { category_id: dto.category_id }),
+        ...(dto.category_id !== undefined && { category_id: dto.category_id }),
         ...(dto.user_defined_value != null && {
           user_defined_value: dto.user_defined_value,
         }),
