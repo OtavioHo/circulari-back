@@ -161,9 +161,14 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 // POST /ai/analyze — response 200
 {
   "name": "string",
-  "category": "string",
+  "category": "string | null",
+  "category_id": "uuid | null",
+  "description": "string",
   "price_min": 0,
   "price_max": 0
 }
+// category: name matched from seeded category list, or null if none fit
+// category_id: UUID of the matched category, or null
+// description: one-paragraph item description in Portuguese (Brazil)
 ```
 
