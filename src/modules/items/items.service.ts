@@ -95,6 +95,11 @@ export class ItemsService {
   }
 
   async update(id: string, userId: string, dto: UpdateItemDto, imageFile?: Express.Multer.File) {
+    const existing = await this.repository.findOneOwnedByUser(id, userId);
+    if (!existing) {
+      throw new NotFoundException('Item not found');
+    }
+
     let imagePayload: { url: string; storageKey: string; isMain: true } | undefined;
 
     if (imageFile) {

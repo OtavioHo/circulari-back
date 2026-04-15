@@ -58,22 +58,22 @@ export class ItemsRepository {
   }
 
   async update(id: string, userId: string, dto: UpdateItemDto, image?: ImagePayload) {
-    const result = await this.prisma.item.updateMany({
-      where: { id, list: { user_id: userId } },
-      data: {
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.description != null && { description: dto.description }),
-        ...(dto.quantity != null && { quantity: dto.quantity }),
-        ...(dto.category_id !== undefined && { category_id: dto.category_id }),
-        ...(dto.user_defined_value != null && {
-          user_defined_value: dto.user_defined_value,
-        }),
-      },
-    });
-    if (result.count === 0) return null;
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.item.updateMany({
+        where: { id, list: { user_id: userId } },
+        data: {
+          ...(dto.name != null && { name: dto.name }),
+          ...(dto.description != null && { description: dto.description }),
+          ...(dto.quantity != null && { quantity: dto.quantity }),
+          ...(dto.category_id !== undefined && { category_id: dto.category_id }),
+          ...(dto.user_defined_value != null && {
+            user_defined_value: dto.user_defined_value,
+          }),
+        },
+      });
+      if (result.count === 0) return null;
 
-    if (image) {
-      await this.prisma.$transaction(async (tx) => {
+      if (image) {
         await tx.itemImage.deleteMany({ where: { item_id: id, is_main: true } });
         await tx.itemImage.create({
           data: {
@@ -83,10 +83,10 @@ export class ItemsRepository {
             is_main: image.isMain,
           },
         });
-      });
-    }
+      }
 
-    return this.prisma.item.findFirst({ where: { id }, include: includeImages });
+      return tx.item.findFirst({ where: { id }, include: includeImages });
+    });
   }
 
   async delete(id: string, userId: string) {

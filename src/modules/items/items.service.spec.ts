@@ -218,6 +218,7 @@ describe('ItemsService', () => {
     const mockUpdatedItem = makeItem({ name: 'Updated' });
 
     it('returns the updated item when found', async () => {
+      itemsRepository.findOneOwnedByUser.mockResolvedValue(makeItem() as any);
       itemsRepository.update.mockResolvedValue(mockUpdatedItem as any);
 
       const result = await service.update('item-1', 'user-1', { name: 'Updated' });
@@ -232,6 +233,7 @@ describe('ItemsService', () => {
     });
 
     it('uploads new image and replaces main image record', async () => {
+      itemsRepository.findOneOwnedByUser.mockResolvedValue(makeItem() as any);
       storageService.upload.mockResolvedValue('https://cdn.example.com/items/item-1/new.jpg');
       const itemWithNewImage = makeItem({
         name: 'Updated',
@@ -261,14 +263,17 @@ describe('ItemsService', () => {
     });
 
     it('throws NotFoundException when item not found or not owned', async () => {
-      itemsRepository.update.mockResolvedValue(null);
+      itemsRepository.findOneOwnedByUser.mockResolvedValue(null);
 
       await expect(service.update('item-999', 'user-1', { name: 'x' })).rejects.toThrow(
         NotFoundException,
       );
+      expect(storageService.upload).not.toHaveBeenCalled();
+      expect(itemsRepository.update).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when category_id does not exist (P2003)', async () => {
+      itemsRepository.findOneOwnedByUser.mockResolvedValue(makeItem() as any);
       const fkError = new Prisma.PrismaClientKnownRequestError('FK violation', {
         code: 'P2003',
         clientVersion: '0.0.0',
@@ -300,7 +305,7 @@ describe('ItemsService', () => {
   describe('search', () => {
     it('delegates to repository with userId and query and returns mapped response', async () => {
       const createdAt = new Date();
-      itemsRepository.searchByUser.mockResolvedValue([makeItem({ created_at: createdAt })] as any);
+      itemsRepository.searchByUser.mockResolvedValue([makeItem({ name: 'vintage lamp', created_at: createdAt })] as any);
 
       const result = await service.search('user-1', 'lamp');
 
@@ -308,7 +313,7 @@ describe('ItemsService', () => {
       expect(result).toEqual([
         {
           id: 'item-1',
-          name: 'My Item',
+          name: 'vintage lamp',
           description: null,
           quantity: 1,
           user_defined_value: null,
