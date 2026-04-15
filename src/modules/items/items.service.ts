@@ -71,10 +71,23 @@ export class ItemsService {
         throw new InternalServerErrorException('Image upload failed');
       }
       imagePayload = { url, storageKey: key, isMain: true };
-      const item = await this.repository
-        .createWithImage(dto, itemId, imagePayload)
-        .catch((err) => this.rethrowFkError(err));
-      return this.mapItem(item);
+
+      try {
+        const item = await this.repository.createWithImage(dto, itemId, imagePayload);
+        return this.mapItem(item);
+      } catch (err) {
+        const storageWithDelete = this.storage as IStorageService & {
+          delete?: (key: string) => Promise<void>;
+        };
+
+        try {
+          await storageWithDelete.delete?.(key);
+        } catch {
+          // Best-effort cleanup; preserve the original repository error.
+        }
+
+        this.rethrowFkError(err);
+      }
     }
 
     const item = await this.repository.create(dto).catch((err) => this.rethrowFkError(err));
