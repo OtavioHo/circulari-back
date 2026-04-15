@@ -30,7 +30,7 @@ The prompt is built dynamically with the current category list injected at call 
 ```
 Analyze the image and return a JSON object with the following fields:
 - name: item name in Portuguese (Brazil)
-- category: pick the single most fitting category from this list, or null if none fit: [Móveis, Eletrônicos, ...]
+- category: pick the single most fitting category from this list, or null if none fit: ["Móveis","Eletrônicos", ...]
 - description: brief item description in one paragraph, in Portuguese (Brazil)
 - price_min: minimum market value in BRL (number)
 - price_max: maximum market value in BRL (number)
