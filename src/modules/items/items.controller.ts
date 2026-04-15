@@ -10,11 +10,22 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { Request } from 'express';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { MAX_IMAGE_SIZE, multerImageFileFilter } from '../../common/utils/image-validation';
+
+const imageInterceptor = FileInterceptor('image', {
+  storage: memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_SIZE },
+  fileFilter: multerImageFileFilter,
+});
 
 @Controller('items')
 export class ItemsController {
@@ -28,15 +39,26 @@ export class ItemsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateItemDto, @Req() req: Request) {
+  @UseInterceptors(imageInterceptor)
+  create(
+    @Body() dto: CreateItemDto,
+    @Req() req: Request,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
     const user = req.user as { id: string };
-    return this.itemsService.create(user.id, dto);
+    return this.itemsService.create(user.id, dto, image);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateItemDto, @Req() req: Request) {
+  @UseInterceptors(imageInterceptor)
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateItemDto,
+    @Req() req: Request,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
     const user = req.user as { id: string };
-    return this.itemsService.update(id, user.id, dto);
+    return this.itemsService.update(id, user.id, dto, image);
   }
 
   @Delete(':id')

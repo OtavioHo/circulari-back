@@ -57,9 +57,9 @@ describe('ItemsController', () => {
       const expected = { id: 'item-1', name: 'My Item', images: [], created_at: new Date() };
       mockItemsService.create.mockResolvedValue(expected);
 
-      const result = await controller.create(dto as any, makeReq('user-1'));
+      const result = await controller.create(dto as any, makeReq('user-1'), undefined);
 
-      expect(mockItemsService.create).toHaveBeenCalledWith('user-1', dto);
+      expect(mockItemsService.create).toHaveBeenCalledWith('user-1', dto, undefined);
       expect(result).toBe(expected);
     });
 
@@ -74,9 +74,9 @@ describe('ItemsController', () => {
       const dto = { name: 'Updated' };
       mockItemsService.update.mockResolvedValue(undefined);
 
-      await controller.update('item-1', dto as any, makeReq('user-1'));
+      await controller.update('item-1', dto as any, makeReq('user-1'), undefined);
 
-      expect(mockItemsService.update).toHaveBeenCalledWith('item-1', 'user-1', dto);
+      expect(mockItemsService.update).toHaveBeenCalledWith('item-1', 'user-1', dto, undefined);
     });
 
     it('is NOT marked @Public so JwtAuthGuard protects it', () => {

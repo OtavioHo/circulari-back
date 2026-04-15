@@ -95,41 +95,39 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /items?search= | Global item search by name |
-| POST | /items | Create item with final data (no AI, no image) |
-| PATCH | /items/:id | Update item fields |
+| POST | /items | Create item; optional image upload via multipart/form-data |
+| PATCH | /items/:id | Update item fields; optional image replacement |
 | DELETE | /items/:id | Delete item |
 
 ```json
-// POST /items — request (application/json)
-{
-  "list_id": "uuid",
-  "name": "string",
-  "description": "string",   // optional
-  "quantity": 1,             // optional, min 1
-  "category_id": "uuid",     // optional
-  "user_defined_value": 0    // optional
-}
+// POST /items — request (multipart/form-data)
+// Text fields:
+//   list_id: uuid (required)
+//   name: string (required)
+//   description: string (optional)
+//   quantity: number (optional, min 1, default 1)
+//   category_id: uuid (optional)
+//   user_defined_value: number (optional)
+// File fields:
+//   image: file (optional — JPEG, PNG, WebP, GIF, max 10 MB)
 
 // POST /items — response 201
 {
   "id": "uuid",
   "name": "string",
-  "description": "string",
+  "description": "string | null",
   "quantity": 1,
-  "user_defined_value": 0,
+  "user_defined_value": "number | null",
   "category": { "id": "uuid", "name": "string" },  // or null
-  "images": [],
+  "images": [
+    { "url": "string", "is_main": true }
+  ],  // empty array if no image uploaded
   "created_at": "timestamp"
 }
 
-// PATCH /items/:id — request (all fields optional)
-{
-  "name": "string",
-  "description": "string",
-  "quantity": 1,
-  "category_id": "uuid",
-  "user_defined_value": 0
-}
+// PATCH /items/:id — request (multipart/form-data, all fields optional)
+// Text fields: name, description, quantity, category_id, user_defined_value
+// File fields: image (replaces existing main image if provided)
 
 // PATCH /items/:id — response 200
 {
@@ -139,7 +137,9 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "quantity": 1,
   "user_defined_value": "number | null",
   "category": { "id": "uuid", "name": "string" },  // or null
-  "images": [],
+  "images": [
+    { "url": "string", "is_main": true }
+  ],  // empty array if no image exists
   "created_at": "timestamp"
 }
 ```
@@ -148,7 +148,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ---
 
-## AI <Badge type="danger" text="Not Implemented" />
+## AI <Badge type="tip" text="Implemented" />
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

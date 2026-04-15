@@ -25,7 +25,7 @@ hero:
 | Auth (email + social) | <Badge type="warning" text="In Progress" /> |
 | Lists CRUD | <Badge type="tip" text="Implemented" /> |
 | Items CRUD | <Badge type="tip" text="Implemented" /> |
-| Image upload + storage | <Badge type="warning" text="In Progress" /> |
+| Image upload + storage | <Badge type="tip" text="Implemented" /> |
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
 | Dashboard + search | <Badge type="danger" text="Not Implemented" /> |
 | Monetization tiers | <Badge type="danger" text="Not Implemented" /> |
