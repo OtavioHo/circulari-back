@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { IStorageService } from './storage.interface';
 
 export class R2StorageService implements IStorageService {
@@ -35,5 +36,13 @@ export class R2StorageService implements IStorageService {
       }),
     );
     return `${this.publicUrl}/${key.replace(/^\//, '')}`;
+  }
+
+  async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      { expiresIn },
+    );
   }
 }

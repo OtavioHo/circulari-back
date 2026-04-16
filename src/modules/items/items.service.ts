@@ -39,7 +39,13 @@ export class ItemsService {
     throw err;
   }
 
-  private mapItem(item: Awaited<ReturnType<ItemsRepository['create']>>) {
+  private async mapItem(item: Awaited<ReturnType<ItemsRepository['create']>>) {
+    const images = await Promise.all(
+      item.images.map(async (img) => ({
+        url: await this.storage.getSignedUrl(img.storage_key),
+        is_main: img.is_main,
+      })),
+    );
     return {
       id: item.id,
       name: item.name,
@@ -47,7 +53,7 @@ export class ItemsService {
       quantity: item.quantity,
       user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
       category: item.category ?? null,
-      images: item.images.map((img) => ({ url: img.url, is_main: img.is_main })),
+      images,
       created_at: item.created_at,
     };
   }
@@ -136,7 +142,7 @@ export class ItemsService {
 
   async search(userId: string, query: string) {
     const items = await this.repository.searchByUser(userId, query);
-    return items.map((item) => this.mapItem(item));
+    return Promise.all(items.map((item) => this.mapItem(item)));
   }
 
   async getByList(listId: string, userId: string, cursor?: string, limit: number = 20) {
@@ -151,7 +157,7 @@ export class ItemsService {
     const nextCursor = hasNextPage ? items[items.length - 1].id : null;
 
     return {
-      data: items.map((item) => this.mapItem(item)),
+      data: await Promise.all(items.map((item) => this.mapItem(item))),
       nextCursor,
     };
   }
