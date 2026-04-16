@@ -46,7 +46,10 @@ export class AiService {
       categories = await this.prisma.category.findMany({ select: { id: true, name: true } });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Category lookup failed: ${message}`, err instanceof Error ? err.stack : undefined);
+      this.logger.error(
+        `Category lookup failed: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new ServiceUnavailableException('Category lookup failed');
     }
 
