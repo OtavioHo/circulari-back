@@ -29,3 +29,14 @@ hero:
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
 | Dashboard + search | <Badge type="warning" text="In Progress" /> |
 | Monetization tiers | <Badge type="danger" text="Not Implemented" /> |
+
+## Cost Estimates by MAU Tier
+
+Estimated monthly cost per hosting stack. See [full breakdown](./infrastructure-costs) for details.
+
+| Stack | 100 MAU | 1K MAU | 10K MAU | 50K MAU |
+|-------|---------|--------|---------|---------|
+| **VPS + R2 (budget)** | ~$21 | ~$29 | ~$127 | ~$564 |
+| **AWS Full (Lightsail + RDS + S3)** | ~$44 | ~$67 | ~$238 | ~$866 |
+
+> Includes compute, database, storage, AI (GPT-4o-mini), and additional services (push notifications, email, monitoring, app store fees).
