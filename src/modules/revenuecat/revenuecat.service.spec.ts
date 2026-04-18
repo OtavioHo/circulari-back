@@ -25,11 +25,8 @@ describe('RevenueCatService', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: jest.fn((key: string) => {
-              if (key === 'REVENUECAT_WEBHOOK_SECRET') return WEBHOOK_SECRET;
-              throw new Error(`Missing ${key}`);
-            }),
             get: jest.fn((key: string, fallback?: unknown) => {
+              if (key === 'REVENUECAT_WEBHOOK_SECRET') return WEBHOOK_SECRET;
               if (key === 'REVENUECAT_API_KEY') return API_KEY;
               if (key === 'REVENUECAT_API_URL') return fallback;
               return fallback;

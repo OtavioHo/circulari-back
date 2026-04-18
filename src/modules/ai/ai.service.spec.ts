@@ -26,15 +26,15 @@ const mockCategories = [
 describe('AiService', () => {
   let service: AiService;
   let prisma: { category: { findMany: jest.Mock } };
-  let limits: { assertCanUseAi: jest.Mock; recordAiCall: jest.Mock };
+  let limits: { reserveAiCall: jest.Mock; releaseAiReservation: jest.Mock };
 
   beforeEach(async () => {
     mockCreate.mockReset();
 
     prisma = { category: { findMany: jest.fn().mockResolvedValue(mockCategories) } };
     limits = {
-      assertCanUseAi: jest.fn().mockResolvedValue(undefined),
-      recordAiCall: jest.fn().mockResolvedValue(undefined),
+      reserveAiCall: jest.fn().mockResolvedValue(undefined),
+      releaseAiReservation: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -185,7 +185,7 @@ describe('AiService', () => {
     });
 
     it('rejects with ForbiddenException when AI monthly limit is reached', async () => {
-      limits.assertCanUseAi.mockRejectedValue(
+      limits.reserveAiCall.mockRejectedValue(
         new ForbiddenException({ code: 'LIMIT_REACHED', limit: 10 }),
       );
 
@@ -193,10 +193,10 @@ describe('AiService', () => {
         ForbiddenException,
       );
       expect(mockCreate).not.toHaveBeenCalled();
-      expect(limits.recordAiCall).not.toHaveBeenCalled();
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
     });
 
-    it('records AI call after a successful analysis', async () => {
+    it('reserves AI call before analysis and does not release on success', async () => {
       const payload = {
         name: 'Notebook',
         category: 'Eletrônicos',
@@ -208,16 +208,17 @@ describe('AiService', () => {
 
       await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
-      expect(limits.recordAiCall).toHaveBeenCalledWith(fakeUserId);
+      expect(limits.reserveAiCall).toHaveBeenCalledWith(fakeUserId);
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
     });
 
-    it('does not record AI call when analysis fails', async () => {
+    it('releases the reservation when analysis fails', async () => {
       mockCreate.mockRejectedValue(new Error('Network error'));
 
       await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
         ServiceUnavailableException,
       );
-      expect(limits.recordAiCall).not.toHaveBeenCalled();
+      expect(limits.releaseAiReservation).toHaveBeenCalledWith(fakeUserId);
     });
   });
 });

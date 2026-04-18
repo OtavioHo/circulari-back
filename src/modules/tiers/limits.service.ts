@@ -33,14 +33,22 @@ export class LimitsService {
     if (count >= maxItems) throw limitReached(maxItems);
   }
 
-  async assertCanUseAi(userId: string): Promise<void> {
+  async reserveAiCall(userId: string): Promise<void> {
     const { maxAiCallsPerMonth } = this.config.get(await this.repository.getUserTier(userId));
     if (!isFinite(maxAiCallsPerMonth)) return;
-    const count = await this.repository.getMonthlyAiCalls(userId, currentMonth());
-    if (count >= maxAiCallsPerMonth) throw limitReached(maxAiCallsPerMonth);
+    if (maxAiCallsPerMonth <= 0) throw limitReached(maxAiCallsPerMonth);
+
+    const reserved = await this.repository.reserveAiCall(
+      userId,
+      currentMonth(),
+      maxAiCallsPerMonth,
+    );
+    if (!reserved) throw limitReached(maxAiCallsPerMonth);
   }
 
-  recordAiCall(userId: string): Promise<void> {
-    return this.repository.incrementMonthlyAiCalls(userId, currentMonth());
+  async releaseAiReservation(userId: string): Promise<void> {
+    const { maxAiCallsPerMonth } = this.config.get(await this.repository.getUserTier(userId));
+    if (!isFinite(maxAiCallsPerMonth)) return;
+    await this.repository.releaseAiReservation(userId, currentMonth());
   }
 }

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'crypto';
 import { RevenueCatRepository } from './revenuecat.repository';
 import { RevenueCatWebhookBody } from './dto/webhook-event.dto';
 
@@ -25,7 +26,7 @@ function resolveTier(eventType: string): Tier | null {
 @Injectable()
 export class RevenueCatService {
   private readonly logger = new Logger(RevenueCatService.name);
-  private readonly webhookSecret: string;
+  private readonly webhookSecret?: string;
   private readonly apiKey?: string;
   private readonly apiBaseUrl: string;
 
@@ -33,17 +34,22 @@ export class RevenueCatService {
     config: ConfigService,
     private readonly repository: RevenueCatRepository,
   ) {
-    this.webhookSecret = config.getOrThrow<string>('REVENUECAT_WEBHOOK_SECRET');
+    this.webhookSecret = config.get<string>('REVENUECAT_WEBHOOK_SECRET');
     this.apiKey = config.get<string>('REVENUECAT_API_KEY');
     this.apiBaseUrl = config.get<string>('REVENUECAT_API_URL', 'https://api.revenuecat.com/v1');
   }
 
   verifySignature(authorizationHeader: string | undefined): void {
+    if (!this.webhookSecret) {
+      throw new UnauthorizedException('Webhook secret not configured');
+    }
     if (!authorizationHeader) {
       throw new UnauthorizedException('Missing authorization header');
     }
     const token = authorizationHeader.replace(/^Bearer\s+/i, '').trim();
-    if (token !== this.webhookSecret) {
+    const tokenBuf = Buffer.from(token);
+    const secretBuf = Buffer.from(this.webhookSecret);
+    if (tokenBuf.length !== secretBuf.length || !timingSafeEqual(tokenBuf, secretBuf)) {
       throw new UnauthorizedException('Invalid webhook signature');
     }
   }

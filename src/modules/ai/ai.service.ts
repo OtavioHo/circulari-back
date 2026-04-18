@@ -42,8 +42,24 @@ export class AiService {
   }
 
   async analyze(userId: string, imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
-    await this.limits.assertCanUseAi(userId);
+    await this.limits.reserveAiCall(userId);
+    let success = false;
+    try {
+      const result = await this.runAnalysis(userId, imageBuffer, mimetype);
+      success = true;
+      return result;
+    } finally {
+      if (!success) {
+        await this.limits.releaseAiReservation(userId).catch(() => undefined);
+      }
+    }
+  }
 
+  private async runAnalysis(
+    _userId: string,
+    imageBuffer: Buffer,
+    mimetype: string,
+  ): Promise<AnalyzeResult> {
     let categories: Array<{ id: string; name: string }>;
 
     try {
@@ -125,8 +141,6 @@ export class AiService {
       if (result.price_min > result.price_max) {
         [result.price_min, result.price_max] = [result.price_max, result.price_min];
       }
-
-      await this.limits.recordAiCall(userId);
 
       return result;
     } catch (err) {

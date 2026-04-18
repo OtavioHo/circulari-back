@@ -65,7 +65,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    await this.revenueCat.reconcileUser(user.id);
+    void this.revenueCat.reconcileUser(user.id).catch(() => undefined);
 
     const tokens = await this.signTokens(user.id, user.email);
     await this.storeRefreshHash(user.id, tokens.refreshToken);

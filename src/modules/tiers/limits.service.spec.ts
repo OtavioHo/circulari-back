@@ -22,7 +22,8 @@ describe('LimitsService', () => {
             countLists: jest.fn(),
             countItems: jest.fn(),
             getMonthlyAiCalls: jest.fn(),
-            incrementMonthlyAiCalls: jest.fn(),
+            reserveAiCall: jest.fn(),
+            releaseAiReservation: jest.fn(),
           },
         },
         {
@@ -84,31 +85,70 @@ describe('LimitsService', () => {
     });
   });
 
-  describe('assertCanUseAi', () => {
-    it('throws LIMIT_REACHED at monthly AI cap', async () => {
+  describe('reserveAiCall', () => {
+    it('throws LIMIT_REACHED when repository cannot reserve a slot', async () => {
       repository.getUserTier.mockResolvedValue('free');
       tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
-      repository.getMonthlyAiCalls.mockResolvedValue(10);
+      repository.reserveAiCall.mockResolvedValue(false);
 
-      await expect(service.assertCanUseAi('user-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.reserveAiCall('user-1')).rejects.toThrow(ForbiddenException);
     });
 
-    it('allows AI call below cap', async () => {
+    it('resolves when repository reserves a slot', async () => {
       repository.getUserTier.mockResolvedValue('free');
       tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
-      repository.getMonthlyAiCalls.mockResolvedValue(9);
+      repository.reserveAiCall.mockResolvedValue(true);
 
-      await expect(service.assertCanUseAi('user-1')).resolves.toBeUndefined();
+      await expect(service.reserveAiCall('user-1')).resolves.toBeUndefined();
+      const call = repository.reserveAiCall.mock.calls[0];
+      expect(call[0]).toBe('user-1');
+      expect(call[1]).toMatch(/^\d{4}-\d{2}$/);
+      expect(call[2]).toBe(10);
+    });
+
+    it('skips reservation for premium (infinite cap)', async () => {
+      repository.getUserTier.mockResolvedValue('premium');
+      tierConfig.get.mockReturnValue({
+        maxLists: Infinity,
+        maxItems: Infinity,
+        maxAiCallsPerMonth: Infinity,
+      });
+
+      await expect(service.reserveAiCall('user-1')).resolves.toBeUndefined();
+      expect(repository.reserveAiCall).not.toHaveBeenCalled();
+    });
+
+    it('throws LIMIT_REACHED immediately when cap is zero', async () => {
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 0 });
+
+      await expect(service.reserveAiCall('user-1')).rejects.toThrow(ForbiddenException);
+      expect(repository.reserveAiCall).not.toHaveBeenCalled();
     });
   });
 
-  describe('recordAiCall', () => {
+  describe('releaseAiReservation', () => {
     it('delegates to repository with userId and current month (YYYY-MM)', async () => {
-      await service.recordAiCall('user-1');
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
 
-      const call = repository.incrementMonthlyAiCalls.mock.calls[0];
+      await service.releaseAiReservation('user-1');
+
+      const call = repository.releaseAiReservation.mock.calls[0];
       expect(call[0]).toBe('user-1');
       expect(call[1]).toMatch(/^\d{4}-\d{2}$/);
+    });
+
+    it('is a no-op for premium users', async () => {
+      repository.getUserTier.mockResolvedValue('premium');
+      tierConfig.get.mockReturnValue({
+        maxLists: Infinity,
+        maxItems: Infinity,
+        maxAiCallsPerMonth: Infinity,
+      });
+
+      await service.releaseAiReservation('user-1');
+      expect(repository.releaseAiReservation).not.toHaveBeenCalled();
     });
   });
 });

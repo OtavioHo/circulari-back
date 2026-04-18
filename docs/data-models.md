@@ -71,10 +71,10 @@ Per-user, per-month counter for AI-analysis calls. Resets implicitly each month 
 
 ## ProcessedWebhookEvent
 
-Dedup record for idempotent webhook processing. One row per RevenueCat event `id` we've handled — subsequent retries are short-circuited.
+Dedup record for idempotent webhook processing. One row per `(provider, event_id)` we've handled — subsequent retries are short-circuited.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| event_id | string | PK; external event identifier |
-| provider | string | `"revenuecat"` (reserved for future providers) |
+| provider | string | Part of composite PK; `"revenuecat"` today, reserved for future providers |
+| event_id | string | Part of composite PK; external event identifier |
 | processed_at | timestamp | |

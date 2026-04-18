@@ -45,10 +45,11 @@ model AiUsage {
 }
 
 model ProcessedWebhookEvent {
-  event_id     String   @id
+  event_id     String
   provider     String
   processed_at DateTime @default(now())
 
+  @@id([provider, event_id])
   @@map("processed_webhook_events")
 }
 

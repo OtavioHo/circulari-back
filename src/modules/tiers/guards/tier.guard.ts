@@ -21,7 +21,7 @@ export class TierGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest<Request>();
     const user = req.user as { id: string } | undefined;
-    if (!user) return false;
+    if (!user) return true;
 
     const tier = await this.limitsRepository.getUserTier(user.id);
     if (requiredTier === 'premium' && tier !== 'premium') {

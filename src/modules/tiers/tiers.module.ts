@@ -11,7 +11,6 @@ import { TierLimitsConfig } from './tier-limits.config';
     TierLimitsConfig,
     LimitsRepository,
     LimitsService,
-    TierGuard,
     { provide: APP_GUARD, useClass: TierGuard },
   ],
   exports: [LimitsRepository, LimitsService, TierLimitsConfig],
