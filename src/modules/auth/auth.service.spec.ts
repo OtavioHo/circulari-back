@@ -5,12 +5,16 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
+import { RevenueCatService } from '../revenuecat/revenuecat.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let repository: jest.Mocked<AuthRepository>;
+  let revenueCat: { reconcileUser: jest.Mock };
 
   beforeEach(async () => {
+    revenueCat = { reconcileUser: jest.fn().mockResolvedValue(undefined) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -23,6 +27,10 @@ describe('AuthService', () => {
             updateRefreshTokenHash: jest.fn(),
             verifyAndRotateRefreshToken: jest.fn(),
           },
+        },
+        {
+          provide: RevenueCatService,
+          useValue: revenueCat,
         },
         {
           provide: JwtService,
@@ -73,6 +81,7 @@ describe('AuthService', () => {
         oauth_provider: null,
         oauth_id: null,
         refresh_token_hash: null,
+        tier: 'free',
         created_at: new Date(),
       });
       repository.updateRefreshTokenHash.mockResolvedValue(undefined as any);
@@ -96,6 +105,7 @@ describe('AuthService', () => {
         oauth_provider: null,
         oauth_id: null,
         refresh_token_hash: null,
+        tier: 'free',
         created_at: new Date(),
       });
 
@@ -117,14 +127,16 @@ describe('AuthService', () => {
         oauth_provider: null,
         oauth_id: null,
         refresh_token_hash: null,
+        tier: 'free',
         created_at: new Date(),
-      });
+      } as any);
       repository.updateRefreshTokenHash.mockResolvedValue(undefined as any);
 
       const result = await service.login(dto);
 
       expect(result.token).toBe('signed-token');
       expect(result.refreshToken).toBe('signed-token');
+      expect(revenueCat.reconcileUser).toHaveBeenCalledWith('uuid-1');
     });
 
     it('should throw UnauthorizedException for wrong password', async () => {
@@ -138,6 +150,7 @@ describe('AuthService', () => {
         oauth_provider: null,
         oauth_id: null,
         refresh_token_hash: null,
+        tier: 'free',
         created_at: new Date(),
       });
 
@@ -161,6 +174,7 @@ describe('AuthService', () => {
       oauth_provider: null,
       oauth_id: null,
       refresh_token_hash: 'some-hash',
+      tier: 'free',
       created_at: new Date(),
     };
 

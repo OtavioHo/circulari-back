@@ -23,11 +23,33 @@ model User {
   oauth_provider     String?
   oauth_id           String?
   refresh_token_hash String?
+  tier               String   @default("free")
   created_at         DateTime @default(now()) @map("created_at")
 
-  lists List[]
+  lists     List[]
+  ai_usages AiUsage[]
 
   @@map("users")
+}
+
+model AiUsage {
+  id         String @id @default(uuid())
+  user_id    String
+  month      String
+  call_count Int    @default(0)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, month])
+  @@map("ai_usages")
+}
+
+model ProcessedWebhookEvent {
+  event_id     String   @id
+  provider     String
+  processed_at DateTime @default(now())
+
+  @@map("processed_webhook_events")
 }
 
 model List {

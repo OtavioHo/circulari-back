@@ -9,6 +9,8 @@ import { ItemsRepository } from './items.repository';
 import { ListsRepository } from '../lists/lists.repository';
 import { STORAGE_SERVICE } from '../storage/storage.interface';
 import { Prisma } from '../../generated/prisma/client';
+import { LimitsService } from '../tiers/limits.service';
+import { ForbiddenException } from '@nestjs/common';
 
 const makeItem = (overrides: Partial<ReturnType<typeof baseItem>> = {}) => ({
   ...baseItem(),
@@ -65,10 +67,15 @@ describe('ItemsService', () => {
   let service: ItemsService;
   let itemsRepository: jest.Mocked<ItemsRepository>;
   let listsRepository: jest.Mocked<ListsRepository>;
-  let storageService: { upload: jest.Mock };
+  let storageService: { upload: jest.Mock; getSignedUrl: jest.Mock };
+  let limits: { assertCanCreateItem: jest.Mock };
 
   beforeEach(async () => {
-    storageService = { upload: jest.fn() };
+    storageService = {
+      upload: jest.fn(),
+      getSignedUrl: jest.fn().mockImplementation(async (key: string) => `https://signed/${key}`),
+    };
+    limits = { assertCanCreateItem: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -95,6 +102,10 @@ describe('ItemsService', () => {
         {
           provide: STORAGE_SERVICE,
           useValue: storageService,
+        },
+        {
+          provide: LimitsService,
+          useValue: limits,
         },
       ],
     }).compile();
@@ -177,6 +188,16 @@ describe('ItemsService', () => {
       listsRepository.findOneByUser.mockResolvedValue(null);
 
       await expect(service.create('user-1', dto)).rejects.toThrow(NotFoundException);
+      expect(itemsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects with ForbiddenException when item limit reached', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      limits.assertCanCreateItem.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 50 }),
+      );
+
+      await expect(service.create('user-1', dto)).rejects.toThrow(ForbiddenException);
       expect(itemsRepository.create).not.toHaveBeenCalled();
     });
 

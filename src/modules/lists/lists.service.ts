@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ListsRepository } from './lists.repository';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { LimitsService } from '../tiers/limits.service';
 
 @Injectable()
 export class ListsService {
-  constructor(private readonly repository: ListsRepository) {}
+  constructor(
+    private readonly repository: ListsRepository,
+    private readonly limits: LimitsService,
+  ) {}
 
   async getAll(userId: string) {
     const lists = await this.repository.findAllByUser(userId);
@@ -20,6 +24,7 @@ export class ListsService {
   }
 
   async create(userId: string, dto: CreateListDto) {
+    await this.limits.assertCanCreateList(userId);
     const list = await this.repository.create(userId, dto);
     return {
       id: list.id,

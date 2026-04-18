@@ -28,7 +28,7 @@ hero:
 | Image upload + storage | <Badge type="tip" text="Implemented" /> |
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
 | Dashboard + search | <Badge type="warning" text="In Progress" /> |
-| Monetization tiers | <Badge type="danger" text="Not Implemented" /> |
+| Monetization tiers | <Badge type="warning" text="In Progress" /> |
 
 ## Cost Estimates by MAU Tier
 

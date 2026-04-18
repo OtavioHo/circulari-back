@@ -1,13 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ListsService } from './lists.service';
 import { ListsRepository } from './lists.repository';
+import { LimitsService } from '../tiers/limits.service';
 
 describe('ListsService', () => {
   let service: ListsService;
   let repository: jest.Mocked<ListsRepository>;
+  let limits: { assertCanCreateList: jest.Mock };
 
   beforeEach(async () => {
+    limits = { assertCanCreateList: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListsService,
@@ -19,6 +23,10 @@ describe('ListsService', () => {
             update: jest.fn(),
             delete: jest.fn(),
           },
+        },
+        {
+          provide: LimitsService,
+          useValue: limits,
         },
       ],
     }).compile();
@@ -79,6 +87,17 @@ describe('ListsService', () => {
   });
 
   describe('create', () => {
+    it('rejects with ForbiddenException when list limit reached', async () => {
+      limits.assertCanCreateList.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 3 }),
+      );
+
+      await expect(service.create('user-1', { name: 'New List' })).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
     it('delegates to repository and returns shaped list with zero aggregates', async () => {
       repository.create.mockResolvedValue({
         id: 'list-1',

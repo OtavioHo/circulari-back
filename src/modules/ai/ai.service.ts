@@ -1,6 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { LimitsService } from '../tiers/limits.service';
 import OpenAI from 'openai';
 
 function buildPrompt(categoryNames: string[]): string {
@@ -33,13 +34,16 @@ export class AiService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly limits: LimitsService,
   ) {
     this.openai = new OpenAI({
       apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY'),
     });
   }
 
-  async analyze(imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
+  async analyze(userId: string, imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
+    await this.limits.assertCanUseAi(userId);
+
     let categories: Array<{ id: string; name: string }>;
 
     try {
@@ -121,6 +125,8 @@ export class AiService {
       if (result.price_min > result.price_max) {
         [result.price_min, result.price_max] = [result.price_max, result.price_min];
       }
+
+      await this.limits.recordAiCall(userId);
 
       return result;
     } catch (err) {

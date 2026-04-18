@@ -4,11 +4,13 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { Request } from 'express';
 import { AiService } from './ai.service';
 import {
   MAX_IMAGE_SIZE,
@@ -29,11 +31,12 @@ export class AiController {
       fileFilter: multerImageFileFilter,
     }),
   )
-  analyze(@UploadedFile() file: Express.Multer.File) {
+  analyze(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
     if (!file) {
       throw new BadRequestException('Image file is required');
     }
     const actualMime = validateImageMagicBytes(file.buffer);
-    return this.aiService.analyze(file.buffer, actualMime);
+    const user = req.user as { id: string };
+    return this.aiService.analyze(user.id, file.buffer, actualMime);
   }
 }

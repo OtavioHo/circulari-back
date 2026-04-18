@@ -13,6 +13,7 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { Prisma } from '../../generated/prisma/client';
 import { IStorageService, STORAGE_SERVICE } from '../storage/storage.interface';
 import { validateImageMagicBytes } from '../../common/utils/image-validation';
+import { LimitsService } from '../tiers/limits.service';
 
 function extFromMime(mime: string): string {
   const map: Record<string, string> = {
@@ -30,6 +31,7 @@ export class ItemsService {
     private readonly repository: ItemsRepository,
     private readonly listsRepository: ListsRepository,
     @Inject(STORAGE_SERVICE) private readonly storage: IStorageService,
+    private readonly limits: LimitsService,
   ) {}
 
   private rethrowFkError(err: unknown): never {
@@ -63,6 +65,8 @@ export class ItemsService {
     if (!list) {
       throw new NotFoundException('List not found');
     }
+
+    await this.limits.assertCanCreateItem(userId);
 
     let imagePayload: { url: string; storageKey: string; isMain: true } | undefined;
 
