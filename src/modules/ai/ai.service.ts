@@ -42,14 +42,14 @@ export class AiService {
   }
 
   async analyze(userId: string, imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
-    await this.limits.reserveAiCall(userId);
+    const reserved = await this.limits.reserveAiCall(userId);
     let success = false;
     try {
       const result = await this.runAnalysis(userId, imageBuffer, mimetype);
       success = true;
       return result;
     } finally {
-      if (!success) {
+      if (!success && reserved) {
         await this.limits.releaseAiReservation(userId).catch(() => undefined);
       }
     }

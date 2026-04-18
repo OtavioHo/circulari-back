@@ -7,10 +7,16 @@ import { LimitsService } from '../tiers/limits.service';
 describe('ListsService', () => {
   let service: ListsService;
   let repository: jest.Mocked<ListsRepository>;
-  let limits: { assertCanCreateList: jest.Mock };
+  let limits: { withListCapLock: jest.Mock };
 
   beforeEach(async () => {
-    limits = { assertCanCreateList: jest.fn() };
+    limits = {
+      withListCapLock: jest
+        .fn()
+        .mockImplementation(async (_userId: string, fn: (tx: unknown) => Promise<unknown>) =>
+          fn(undefined),
+        ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -88,7 +94,7 @@ describe('ListsService', () => {
 
   describe('create', () => {
     it('rejects with ForbiddenException when list limit reached', async () => {
-      limits.assertCanCreateList.mockRejectedValue(
+      limits.withListCapLock.mockRejectedValue(
         new ForbiddenException({ code: 'LIMIT_REACHED', limit: 3 }),
       );
 
@@ -109,7 +115,7 @@ describe('ListsService', () => {
 
       const result = await service.create('user-1', { name: 'New List' });
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' });
+      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' }, undefined);
       expect(result).toEqual({
         id: 'list-1',
         name: 'New List',
@@ -131,10 +137,11 @@ describe('ListsService', () => {
 
       const result = await service.create('user-1', { name: 'Garage', location: '123 Main St' });
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', {
-        name: 'Garage',
-        location: '123 Main St',
-      });
+      expect(repository.create).toHaveBeenCalledWith(
+        'user-1',
+        { name: 'Garage', location: '123 Main St' },
+        undefined,
+      );
       expect(result.location).toBe('123 Main St');
     });
   });

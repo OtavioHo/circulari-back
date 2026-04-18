@@ -16,7 +16,8 @@ export class RevenueCatRepository {
 
   /**
    * Atomically records the event and updates the user tier in a single transaction.
-   * Returns true if processed, false if the event was already handled.
+   * Returns `{ duplicate, userUpdated }`: `duplicate` is true when the event id was
+   * already processed; `userUpdated` is true when a tier change was persisted.
    */
   async processEvent(
     eventId: string,

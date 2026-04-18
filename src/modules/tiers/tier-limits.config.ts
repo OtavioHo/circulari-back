@@ -13,7 +13,7 @@ const DEFAULT_FREE_MAX_LISTS = 3;
 const DEFAULT_FREE_MAX_ITEMS = 50;
 const DEFAULT_FREE_MAX_AI_CALLS_PER_MONTH = 10;
 
-function parsePositiveInt(raw: unknown, fallback: number): number {
+function parseNonNegativeInt(raw: unknown, fallback: number): number {
   if (raw === undefined || raw === null || raw === '') return fallback;
   const n = typeof raw === 'number' ? raw : Number(raw);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
@@ -26,9 +26,9 @@ export class TierLimitsConfig {
   constructor(config: ConfigService) {
     this.limits = {
       free: {
-        maxLists: parsePositiveInt(config.get('FREE_MAX_LISTS'), DEFAULT_FREE_MAX_LISTS),
-        maxItems: parsePositiveInt(config.get('FREE_MAX_ITEMS'), DEFAULT_FREE_MAX_ITEMS),
-        maxAiCallsPerMonth: parsePositiveInt(
+        maxLists: parseNonNegativeInt(config.get('FREE_MAX_LISTS'), DEFAULT_FREE_MAX_LISTS),
+        maxItems: parseNonNegativeInt(config.get('FREE_MAX_ITEMS'), DEFAULT_FREE_MAX_ITEMS),
+        maxAiCallsPerMonth: parseNonNegativeInt(
           config.get('FREE_MAX_AI_CALLS_PER_MONTH'),
           DEFAULT_FREE_MAX_AI_CALLS_PER_MONTH,
         ),

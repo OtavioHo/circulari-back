@@ -68,14 +68,20 @@ describe('ItemsService', () => {
   let itemsRepository: jest.Mocked<ItemsRepository>;
   let listsRepository: jest.Mocked<ListsRepository>;
   let storageService: { upload: jest.Mock; getSignedUrl: jest.Mock };
-  let limits: { assertCanCreateItem: jest.Mock };
+  let limits: { withItemCapLock: jest.Mock };
 
   beforeEach(async () => {
     storageService = {
       upload: jest.fn(),
       getSignedUrl: jest.fn().mockImplementation(async (key: string) => `https://signed/${key}`),
     };
-    limits = { assertCanCreateItem: jest.fn() };
+    limits = {
+      withItemCapLock: jest
+        .fn()
+        .mockImplementation(async (_userId: string, fn: (tx: unknown) => Promise<unknown>) =>
+          fn(undefined),
+        ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -124,7 +130,7 @@ describe('ItemsService', () => {
 
       const result = await service.create('user-1', dto);
 
-      expect(itemsRepository.create).toHaveBeenCalledWith(dto);
+      expect(itemsRepository.create).toHaveBeenCalledWith(dto, undefined);
       expect(storageService.upload).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: 'item-1',
@@ -193,7 +199,7 @@ describe('ItemsService', () => {
 
     it('rejects with ForbiddenException when item limit reached', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
-      limits.assertCanCreateItem.mockRejectedValue(
+      limits.withItemCapLock.mockRejectedValue(
         new ForbiddenException({ code: 'LIMIT_REACHED', limit: 50 }),
       );
 

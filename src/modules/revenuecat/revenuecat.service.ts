@@ -107,15 +107,38 @@ export class RevenueCatService {
 
   private tierFromSubscriber(data: unknown): Tier | null {
     const subscriber = (data as { subscriber?: unknown })?.subscriber;
-    const entitlements = (subscriber as { entitlements?: Record<string, unknown> })?.entitlements;
-    if (!entitlements || typeof entitlements !== 'object') return 'free';
+    if (!subscriber || typeof subscriber !== 'object') {
+      this.logger.warn('Skipping tier reconciliation: missing or malformed subscriber payload');
+      return null;
+    }
+
+    const entitlements = (subscriber as { entitlements?: unknown }).entitlements;
+    if (entitlements === undefined || entitlements === null) return 'free';
+    if (typeof entitlements !== 'object') {
+      this.logger.warn(
+        'Skipping tier reconciliation: malformed entitlements in RevenueCat response',
+      );
+      return null;
+    }
 
     const now = Date.now();
-    for (const value of Object.values(entitlements)) {
-      const expires = (value as { expires_date?: string | null })?.expires_date;
-      if (!expires) return 'premium';
+    for (const value of Object.values(entitlements as Record<string, unknown>)) {
+      if (!value || typeof value !== 'object') {
+        this.logger.warn('Skipping tier reconciliation: malformed entitlement entry');
+        return null;
+      }
+      const expires = (value as { expires_date?: unknown }).expires_date;
+      if (expires === undefined || expires === null) return 'premium';
+      if (typeof expires !== 'string') {
+        this.logger.warn('Skipping tier reconciliation: invalid expires_date type');
+        return null;
+      }
       const expiresAt = Date.parse(expires);
-      if (!isNaN(expiresAt) && expiresAt > now) return 'premium';
+      if (isNaN(expiresAt)) {
+        this.logger.warn('Skipping tier reconciliation: unparseable expires_date');
+        return null;
+      }
+      if (expiresAt > now) return 'premium';
     }
     return 'free';
   }

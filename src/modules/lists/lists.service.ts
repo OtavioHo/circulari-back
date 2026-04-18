@@ -24,8 +24,9 @@ export class ListsService {
   }
 
   async create(userId: string, dto: CreateListDto) {
-    await this.limits.assertCanCreateList(userId);
-    const list = await this.repository.create(userId, dto);
+    const list = await this.limits.withListCapLock(userId, (tx) =>
+      this.repository.create(userId, dto, tx),
+    );
     return {
       id: list.id,
       name: list.name,

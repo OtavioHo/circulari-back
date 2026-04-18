@@ -33,7 +33,7 @@ describe('AiService', () => {
 
     prisma = { category: { findMany: jest.fn().mockResolvedValue(mockCategories) } };
     limits = {
-      reserveAiCall: jest.fn().mockResolvedValue(undefined),
+      reserveAiCall: jest.fn().mockResolvedValue(true),
       releaseAiReservation: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -219,6 +219,16 @@ describe('AiService', () => {
         ServiceUnavailableException,
       );
       expect(limits.releaseAiReservation).toHaveBeenCalledWith(fakeUserId);
+    });
+
+    it('does not release when no reservation was made (premium)', async () => {
+      limits.reserveAiCall.mockResolvedValue(false);
+      mockCreate.mockRejectedValue(new Error('Network error'));
+
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
     });
   });
 });

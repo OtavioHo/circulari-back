@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { Prisma } from '../../generated/prisma/client';
 
 type ImagePayload = { url: string; storageKey: string; isMain: boolean };
 
@@ -11,8 +12,9 @@ const includeImages = { category: true, images: true } as const;
 export class ItemsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateItemDto) {
-    return this.prisma.item.create({
+  create(dto: CreateItemDto, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.item.create({
       data: {
         list_id: dto.list_id,
         name: dto.name,
@@ -25,29 +27,42 @@ export class ItemsRepository {
     });
   }
 
-  createWithImage(dto: CreateItemDto, itemId: string, image: ImagePayload) {
-    return this.prisma.$transaction(async (tx) => {
-      const item = await tx.item.create({
-        data: {
-          id: itemId,
-          list_id: dto.list_id,
-          name: dto.name,
-          description: dto.description,
-          quantity: dto.quantity ?? 1,
-          category_id: dto.category_id,
-          user_defined_value: dto.user_defined_value,
-        },
-      });
-      await tx.itemImage.create({
-        data: {
-          item_id: item.id,
-          url: image.url,
-          storage_key: image.storageKey,
-          is_main: image.isMain,
-        },
-      });
-      return tx.item.findUniqueOrThrow({ where: { id: item.id }, include: includeImages });
+  createWithImage(
+    dto: CreateItemDto,
+    itemId: string,
+    image: ImagePayload,
+    tx?: Prisma.TransactionClient,
+  ) {
+    if (tx) return this.doCreateWithImage(tx, dto, itemId, image);
+    return this.prisma.$transaction((inner) => this.doCreateWithImage(inner, dto, itemId, image));
+  }
+
+  private async doCreateWithImage(
+    tx: Prisma.TransactionClient,
+    dto: CreateItemDto,
+    itemId: string,
+    image: ImagePayload,
+  ) {
+    const item = await tx.item.create({
+      data: {
+        id: itemId,
+        list_id: dto.list_id,
+        name: dto.name,
+        description: dto.description,
+        quantity: dto.quantity ?? 1,
+        category_id: dto.category_id,
+        user_defined_value: dto.user_defined_value,
+      },
     });
+    await tx.itemImage.create({
+      data: {
+        item_id: item.id,
+        url: image.url,
+        storage_key: image.storageKey,
+        is_main: image.isMain,
+      },
+    });
+    return tx.item.findUniqueOrThrow({ where: { id: item.id }, include: includeImages });
   }
 
   findOneOwnedByUser(id: string, userId: string) {

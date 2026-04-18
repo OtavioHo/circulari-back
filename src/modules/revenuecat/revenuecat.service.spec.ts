@@ -209,5 +209,29 @@ describe('RevenueCatService', () => {
 
       expect(repository.updateUserTier).not.toHaveBeenCalled();
     });
+
+    it('does not downgrade the user when the subscriber payload is malformed', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ subscriber: 'unexpected' }),
+      }) as any;
+
+      await service.reconcileUser('user-1');
+
+      expect(repository.updateUserTier).not.toHaveBeenCalled();
+    });
+
+    it('does not downgrade the user when an entitlement has a malformed expires_date', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          subscriber: { entitlements: { premium: { expires_date: 12345 } } },
+        }),
+      }) as any;
+
+      await service.reconcileUser('user-1');
+
+      expect(repository.updateUserTier).not.toHaveBeenCalled();
+    });
   });
 });
