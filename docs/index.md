@@ -17,6 +17,7 @@ hero:
 | [AI Integration](./ai) | OpenAI flow, prompt format, price normalization |
 | [Infrastructure](./infra) | Deploy, environment variables, Docker |
 | [Roadmap](./roadmap) | Milestones and implementation status |
+| [Monetization](./monetization) | Tier limits, RevenueCat setup, app store configuration |
 
 ## Feature Status Summary
 
@@ -28,7 +29,7 @@ hero:
 | Image upload + storage | <Badge type="tip" text="Implemented" /> |
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
 | Dashboard + search | <Badge type="warning" text="In Progress" /> |
-| Monetization tiers | <Badge type="warning" text="In Progress" /> |
+| Monetization tiers | <Badge type="tip" text="Implemented" /> |
 
 ## Cost Estimates by MAU Tier
 
