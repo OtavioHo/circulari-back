@@ -9,6 +9,8 @@ import { ItemsRepository } from './items.repository';
 import { ListsRepository } from '../lists/lists.repository';
 import { STORAGE_SERVICE } from '../storage/storage.interface';
 import { Prisma } from '../../generated/prisma/client';
+import { LimitsService } from '../tiers/limits.service';
+import { ForbiddenException } from '@nestjs/common';
 
 const makeItem = (overrides: Partial<ReturnType<typeof baseItem>> = {}) => ({
   ...baseItem(),
@@ -65,10 +67,22 @@ describe('ItemsService', () => {
   let service: ItemsService;
   let itemsRepository: jest.Mocked<ItemsRepository>;
   let listsRepository: jest.Mocked<ListsRepository>;
-  let storageService: { upload: jest.Mock };
+  let storageService: { upload: jest.Mock; getSignedUrl: jest.Mock };
+  let limits: { withItemCapLock: jest.Mock; assertCanCreateItem: jest.Mock };
 
   beforeEach(async () => {
-    storageService = { upload: jest.fn() };
+    storageService = {
+      upload: jest.fn(),
+      getSignedUrl: jest.fn().mockImplementation(async (key: string) => `https://signed/${key}`),
+    };
+    limits = {
+      withItemCapLock: jest
+        .fn()
+        .mockImplementation(async (_userId: string, fn: (tx: unknown) => Promise<unknown>) =>
+          fn(undefined),
+        ),
+      assertCanCreateItem: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -96,6 +110,10 @@ describe('ItemsService', () => {
           provide: STORAGE_SERVICE,
           useValue: storageService,
         },
+        {
+          provide: LimitsService,
+          useValue: limits,
+        },
       ],
     }).compile();
 
@@ -113,7 +131,7 @@ describe('ItemsService', () => {
 
       const result = await service.create('user-1', dto);
 
-      expect(itemsRepository.create).toHaveBeenCalledWith(dto);
+      expect(itemsRepository.create).toHaveBeenCalledWith(dto, undefined);
       expect(storageService.upload).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: 'item-1',
@@ -164,6 +182,19 @@ describe('ItemsService', () => {
       expect(itemsRepository.create).not.toHaveBeenCalled();
     });
 
+    it('skips storage upload when preflight cap check rejects', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      limits.assertCanCreateItem.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 50 }),
+      );
+
+      await expect(service.create('user-1', dto, fakeImageFile())).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(storageService.upload).not.toHaveBeenCalled();
+      expect(itemsRepository.createWithImage).not.toHaveBeenCalled();
+    });
+
     it('throws BadRequestException for invalid MIME type (magic bytes mismatch)', async () => {
       listsRepository.findOneByUser.mockResolvedValue(mockList);
       // Buffer that doesn't match any known magic bytes
@@ -177,6 +208,16 @@ describe('ItemsService', () => {
       listsRepository.findOneByUser.mockResolvedValue(null);
 
       await expect(service.create('user-1', dto)).rejects.toThrow(NotFoundException);
+      expect(itemsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects with ForbiddenException when item limit reached', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      limits.withItemCapLock.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 50 }),
+      );
+
+      await expect(service.create('user-1', dto)).rejects.toThrow(ForbiddenException);
       expect(itemsRepository.create).not.toHaveBeenCalled();
     });
 

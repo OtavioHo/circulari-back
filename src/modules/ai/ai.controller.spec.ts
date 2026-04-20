@@ -30,19 +30,23 @@ describe('AiController', () => {
     size: 1024,
   } as Express.Multer.File;
 
+  const makeReq = (id: string) => ({ user: { id } }) as any;
+
   describe('analyze', () => {
-    it('delegates to aiService.analyze with buffer and mimetype', async () => {
+    it('delegates to aiService.analyze with userId, buffer and mimetype', async () => {
       const expected = { name: 'Cadeira', category: 'Móveis', price_min: 100, price_max: 500 };
       mockAiService.analyze.mockResolvedValue(expected);
 
-      const result = await controller.analyze(fakeFile);
+      const result = await controller.analyze(fakeFile, makeReq('user-1'));
 
-      expect(mockAiService.analyze).toHaveBeenCalledWith(fakeFile.buffer, 'image/jpeg');
+      expect(mockAiService.analyze).toHaveBeenCalledWith('user-1', fakeFile.buffer, 'image/jpeg');
       expect(result).toBe(expected);
     });
 
     it('throws BadRequestException when no file is uploaded', () => {
-      expect(() => controller.analyze(undefined as any)).toThrow(BadRequestException);
+      expect(() => controller.analyze(undefined as any, makeReq('user-1'))).toThrow(
+        BadRequestException,
+      );
       expect(mockAiService.analyze).not.toHaveBeenCalled();
     });
 

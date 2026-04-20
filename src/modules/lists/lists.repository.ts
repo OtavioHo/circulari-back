@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class ListsRepository {
@@ -32,8 +33,9 @@ export class ListsRepository {
     }));
   }
 
-  create(userId: string, dto: CreateListDto) {
-    return this.prisma.list.create({
+  create(userId: string, dto: CreateListDto, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.list.create({
       data: { user_id: userId, name: dto.name, location: dto.location },
     });
   }

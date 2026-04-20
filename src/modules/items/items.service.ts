@@ -13,6 +13,7 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { Prisma } from '../../generated/prisma/client';
 import { IStorageService, STORAGE_SERVICE } from '../storage/storage.interface';
 import { validateImageMagicBytes } from '../../common/utils/image-validation';
+import { LimitsService } from '../tiers/limits.service';
 
 function extFromMime(mime: string): string {
   const map: Record<string, string> = {
@@ -30,6 +31,7 @@ export class ItemsService {
     private readonly repository: ItemsRepository,
     private readonly listsRepository: ListsRepository,
     @Inject(STORAGE_SERVICE) private readonly storage: IStorageService,
+    private readonly limits: LimitsService,
   ) {}
 
   private rethrowFkError(err: unknown): never {
@@ -64,40 +66,44 @@ export class ItemsService {
       throw new NotFoundException('List not found');
     }
 
-    let imagePayload: { url: string; storageKey: string; isMain: true } | undefined;
-
-    if (imageFile) {
-      const actualMime = validateImageMagicBytes(imageFile.buffer);
-      const itemId = randomUUID();
-      const key = `items/${itemId}/${randomUUID()}.${extFromMime(actualMime)}`;
-      let url: string;
-      try {
-        url = await this.storage.upload(imageFile.buffer, key, actualMime);
-      } catch {
-        throw new InternalServerErrorException('Image upload failed');
-      }
-      imagePayload = { url, storageKey: key, isMain: true };
-
-      try {
-        const item = await this.repository.createWithImage(dto, itemId, imagePayload);
-        return this.mapItem(item);
-      } catch (err) {
-        const storageWithDelete = this.storage as IStorageService & {
-          delete?: (key: string) => Promise<void>;
-        };
-
-        try {
-          await storageWithDelete.delete?.(key);
-        } catch {
-          // Best-effort cleanup; preserve the original repository error.
-        }
-
-        this.rethrowFkError(err);
-      }
+    if (!imageFile) {
+      const item = await this.limits.withItemCapLock(userId, (tx) =>
+        this.repository.create(dto, tx).catch((err) => this.rethrowFkError(err)),
+      );
+      return this.mapItem(item);
     }
 
-    const item = await this.repository.create(dto).catch((err) => this.rethrowFkError(err));
-    return this.mapItem(item);
+    await this.limits.assertCanCreateItem(userId);
+
+    const actualMime = validateImageMagicBytes(imageFile.buffer);
+    const itemId = randomUUID();
+    const key = `items/${itemId}/${randomUUID()}.${extFromMime(actualMime)}`;
+    let url: string;
+    try {
+      url = await this.storage.upload(imageFile.buffer, key, actualMime);
+    } catch {
+      throw new InternalServerErrorException('Image upload failed');
+    }
+    const imagePayload = { url, storageKey: key, isMain: true as const };
+
+    try {
+      const item = await this.limits.withItemCapLock(userId, (tx) =>
+        this.repository.createWithImage(dto, itemId, imagePayload, tx),
+      );
+      return this.mapItem(item);
+    } catch (err) {
+      const storageWithDelete = this.storage as IStorageService & {
+        delete?: (key: string) => Promise<void>;
+      };
+
+      try {
+        await storageWithDelete.delete?.(key);
+      } catch {
+        // Best-effort cleanup; preserve the original error.
+      }
+
+      this.rethrowFkError(err);
+    }
   }
 
   async update(id: string, userId: string, dto: UpdateItemDto, imageFile?: Express.Multer.File) {

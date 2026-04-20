@@ -36,6 +36,12 @@ Recommended: `docker-compose.yml` with services for `api`, `postgres`, `nginx`.
 | `STORAGE_PUBLIC_URL` | Base URL for public links (optional; defaults vary by provider) |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `APPLE_CLIENT_ID` | Apple OAuth client ID |
+| `REVENUECAT_WEBHOOK_SECRET` | Shared secret for validating incoming RevenueCat webhooks (required in prod) |
+| `REVENUECAT_API_KEY` | REST secret key for reconciling subscription state on login (optional; reconciliation is skipped if unset) |
+| `REVENUECAT_API_URL` | Override for the RevenueCat REST base URL (default `https://api.revenuecat.com/v1`) |
+| `FREE_MAX_LISTS` | Free-tier cap on total lists per user (default 3) |
+| `FREE_MAX_ITEMS` | Free-tier cap on total items per user (default 50) |
+| `FREE_MAX_AI_CALLS_PER_MONTH` | Free-tier cap on `/ai/analyze` calls per calendar month (default 10) |
 
 ## Backup
 

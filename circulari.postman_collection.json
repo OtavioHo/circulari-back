@@ -20,6 +20,11 @@
       "key": "refreshToken",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "revenueCatWebhookSecret",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -545,6 +550,43 @@
                 "categories"
               ]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "POST /webhooks/revenuecat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{revenueCatWebhookSecret}}",
+                "description": "Shared secret configured in the RevenueCat dashboard"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": {\n    \"id\": \"evt-example-1\",\n    \"type\": \"INITIAL_PURCHASE\",\n    \"app_user_id\": \"<user-uuid>\",\n    \"product_id\": \"premium_monthly\",\n    \"purchased_at_ms\": 1745000000000\n  },\n  \"api_version\": \"1.0\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/revenuecat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "revenuecat"
+              ]
+            },
+            "description": "RevenueCat webhook. Event types: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE, PRODUCT_CHANGE, UNCANCELLATION. Returns 200 on success (including duplicate events). Non-200 responses trigger RevenueCat retries."
           }
         }
       ]

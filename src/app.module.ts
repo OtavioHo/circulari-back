@@ -7,6 +7,8 @@ import { ListsModule } from './modules/lists/lists.module';
 import { ItemsModule } from './modules/items/items.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { AiModule } from './modules/ai/ai.module';
+import { TiersModule } from './modules/tiers/tiers.module';
+import { RevenueCatModule } from './modules/revenuecat/revenuecat.module';
 
 @Module({
   imports: [
@@ -17,10 +19,12 @@ import { AiModule } from './modules/ai/ai.module';
     PrismaModule,
     HealthModule,
     AuthModule,
+    TiersModule,
     ListsModule,
     ItemsModule,
     StorageModule,
     AiModule,
+    RevenueCatModule,
   ],
 })
 export class AppModule {}

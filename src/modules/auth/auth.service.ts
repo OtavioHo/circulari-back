@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,13 +13,17 @@ import { Prisma } from '../../generated/prisma/client';
 import { AuthRepository } from './auth.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RevenueCatService } from '../revenuecat/revenuecat.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly repository: AuthRepository,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly revenueCat: RevenueCatService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -62,6 +67,12 @@ export class AuthService {
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    void this.revenueCat.reconcileUser(user.id).catch((err) => {
+      this.logger.warn(
+        `Background tier reconcile failed for ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
 
     const tokens = await this.signTokens(user.id, user.email);
     await this.storeRefreshHash(user.id, tokens.refreshToken);

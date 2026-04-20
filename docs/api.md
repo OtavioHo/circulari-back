@@ -1,7 +1,7 @@
 # API
 
 Base URL: `/api/v1`
-Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/register`, `/auth/login`, `/auth/refresh`, and `/health`
+Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/register`, `/auth/login`, `/auth/refresh`, `/health`, and `/webhooks/revenuecat` (secret-authenticated)
 
 ---
 
@@ -184,4 +184,48 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 // category_id: UUID of the matched seeded category, or null when no seeded match exists
 // description: one-paragraph item description in Portuguese (Brazil)
 ```
+
+---
+
+## Monetization <Badge type="tip" text="Implemented" />
+
+Two tiers: **free** (default on registration) and **premium** (granted by a valid RevenueCat subscription).
+Free-tier caps are enforced on creation endpoints and on AI calls:
+
+| Tier | Lists | Items | AI calls / month |
+|------|-------|-------|------------------|
+| free | `FREE_MAX_LISTS` (default 3) | `FREE_MAX_ITEMS` (default 50) | `FREE_MAX_AI_CALLS_PER_MONTH` (default 10) |
+| premium | unlimited | unlimited | unlimited |
+
+When a free-tier user exceeds a cap, the API returns `403`:
+
+```json
+// POST /lists, POST /items, POST /ai/analyze — 403 Forbidden
+{ "statusCode": 403, "message": "Forbidden", "code": "LIMIT_REACHED", "limit": 3 }
+```
+
+Premium-gated endpoints (if any) are declared with `@RequiresTier('premium')` and return `403`:
+
+```json
+{ "statusCode": 403, "code": "TIER_REQUIRED", "required_tier": "premium" }
+```
+
+### RevenueCat webhook
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /webhooks/revenuecat | Receive subscription lifecycle events from RevenueCat |
+
+- Validates the `Authorization` header against `REVENUECAT_WEBHOOK_SECRET` (401 on mismatch).
+- Matches `event.app_user_id` (falls back to `original_app_user_id`) to the platform `user.id`.
+- Updates `user.tier` based on event type:
+  - `INITIAL_PURCHASE`, `RENEWAL`, `UNCANCELLATION`, `PRODUCT_CHANGE`, `BILLING_ISSUE` → `premium`
+  - `EXPIRATION` → `free`
+  - `CANCELLATION`, `NON_RENEWING_PURCHASE`, `TRANSFER`, `TEST` → tier unchanged
+- **Idempotent**: duplicate events (same `event.id`) return 200 without re-applying the change.
+- Returns 200 only after the DB write commits; non-200 triggers RevenueCat's retry schedule (5/10/20/40/80 min).
+
+### Reconciliation on login
+
+`POST /auth/login` calls RevenueCat's `GET /subscribers/:app_user_id` and corrects `user.tier`. This makes the webhook a latency optimization — a permanently-missed delivery is caught on the user's next login.
 

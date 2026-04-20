@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ServiceUnavailableException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AiService } from './ai.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { LimitsService } from '../tiers/limits.service';
 
 const mockCreate = jest.fn();
 
@@ -25,11 +26,16 @@ const mockCategories = [
 describe('AiService', () => {
   let service: AiService;
   let prisma: { category: { findMany: jest.Mock } };
+  let limits: { reserveAiCall: jest.Mock; releaseAiReservation: jest.Mock };
 
   beforeEach(async () => {
     mockCreate.mockReset();
 
     prisma = { category: { findMany: jest.fn().mockResolvedValue(mockCategories) } };
+    limits = {
+      reserveAiCall: jest.fn().mockResolvedValue(true),
+      releaseAiReservation: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -42,12 +48,17 @@ describe('AiService', () => {
           provide: PrismaService,
           useValue: prisma,
         },
+        {
+          provide: LimitsService,
+          useValue: limits,
+        },
       ],
     }).compile();
 
     service = module.get<AiService>(AiService);
   });
 
+  const fakeUserId = 'user-1';
   const fakeBuffer = Buffer.from('fake-image-data');
   const fakeMime = 'image/jpeg';
 
@@ -66,7 +77,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      const result = await service.analyze(fakeBuffer, fakeMime);
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       expect(result.name).toBe('Notebook');
       expect(result.category).toBe('Eletrônicos');
@@ -86,7 +97,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      const result = await service.analyze(fakeBuffer, fakeMime);
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       expect(result.category).toBe('Móveis');
       expect(result.category_id).toBe('uuid-2');
@@ -102,7 +113,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      const result = await service.analyze(fakeBuffer, fakeMime);
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       expect(result.category).toBeNull();
       expect(result.category_id).toBeNull();
@@ -118,7 +129,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      const result = await service.analyze(fakeBuffer, fakeMime);
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       expect(result.category).toBeNull();
       expect(result.category_id).toBeNull();
@@ -134,7 +145,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      const result = await service.analyze(fakeBuffer, fakeMime);
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       expect(result.price_min).toBe(100);
       expect(result.price_max).toBe(500);
@@ -150,7 +161,7 @@ describe('AiService', () => {
       };
       mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
 
-      await service.analyze(fakeBuffer, fakeMime);
+      await service.analyze(fakeUserId, fakeBuffer, fakeMime);
 
       const promptText = mockCreate.mock.calls[0][0].messages[0].content[0].text as string;
       expect(promptText).toContain('Eletrônicos');
@@ -160,7 +171,7 @@ describe('AiService', () => {
     it('throws ServiceUnavailableException when OpenAI throws', async () => {
       mockCreate.mockRejectedValue(new Error('Network error'));
 
-      await expect(service.analyze(fakeBuffer, fakeMime)).rejects.toThrow(
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
         ServiceUnavailableException,
       );
     });
@@ -168,9 +179,56 @@ describe('AiService', () => {
     it('throws ServiceUnavailableException when response is not valid JSON', async () => {
       mockCreate.mockResolvedValue(makeOpenAIResponse('not valid json at all'));
 
-      await expect(service.analyze(fakeBuffer, fakeMime)).rejects.toThrow(
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+
+    it('rejects with ForbiddenException when AI monthly limit is reached', async () => {
+      limits.reserveAiCall.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 10 }),
+      );
+
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
+    });
+
+    it('reserves AI call before analysis and does not release on success', async () => {
+      const payload = {
+        name: 'Notebook',
+        category: 'Eletrônicos',
+        description: 'Descrição.',
+        price_min: 100,
+        price_max: 200,
+      };
+      mockCreate.mockResolvedValue(makeOpenAIResponse(JSON.stringify(payload)));
+
+      await service.analyze(fakeUserId, fakeBuffer, fakeMime);
+
+      expect(limits.reserveAiCall).toHaveBeenCalledWith(fakeUserId);
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
+    });
+
+    it('releases the reservation when analysis fails', async () => {
+      mockCreate.mockRejectedValue(new Error('Network error'));
+
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      expect(limits.releaseAiReservation).toHaveBeenCalledWith(fakeUserId);
+    });
+
+    it('does not release when no reservation was made (premium)', async () => {
+      limits.reserveAiCall.mockResolvedValue(false);
+      mockCreate.mockRejectedValue(new Error('Network error'));
+
+      await expect(service.analyze(fakeUserId, fakeBuffer, fakeMime)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      expect(limits.releaseAiReservation).not.toHaveBeenCalled();
     });
   });
 });

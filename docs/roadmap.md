@@ -39,9 +39,9 @@
 - [ ] Dashboard endpoint (list count, item count, total value)
 - [x] Full-text search on item names
 
-## Milestone 6 — Monetization <Badge type="danger" text="Not Implemented" />
+## Milestone 6 — Monetization <Badge type="warning" text="In Progress" />
 
-- [ ] Free tier limits (items/lists cap, AI call cap)
-- [ ] Paid tier unlock
-- [ ] Payment integration
+- [x] Free tier limits (items/lists cap, AI call cap)
+- [x] Paid tier unlock
+- [x] Payment integration (RevenueCat webhook + login reconciliation)
 - [ ] Export feature (paid)

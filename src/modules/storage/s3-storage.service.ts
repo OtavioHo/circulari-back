@@ -38,10 +38,8 @@ export class S3StorageService implements IStorageService {
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
-    return getSignedUrl(
-      this.client,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn },
-    );
+    return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
+      expiresIn,
+    });
   }
 }

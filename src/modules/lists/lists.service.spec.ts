@@ -1,13 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ListsService } from './lists.service';
 import { ListsRepository } from './lists.repository';
+import { LimitsService } from '../tiers/limits.service';
 
 describe('ListsService', () => {
   let service: ListsService;
   let repository: jest.Mocked<ListsRepository>;
+  let limits: { withListCapLock: jest.Mock };
 
   beforeEach(async () => {
+    limits = {
+      withListCapLock: jest
+        .fn()
+        .mockImplementation(async (_userId: string, fn: (tx: unknown) => Promise<unknown>) =>
+          fn(undefined),
+        ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListsService,
@@ -19,6 +29,10 @@ describe('ListsService', () => {
             update: jest.fn(),
             delete: jest.fn(),
           },
+        },
+        {
+          provide: LimitsService,
+          useValue: limits,
         },
       ],
     }).compile();
@@ -79,6 +93,17 @@ describe('ListsService', () => {
   });
 
   describe('create', () => {
+    it('rejects with ForbiddenException when list limit reached', async () => {
+      limits.withListCapLock.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 3 }),
+      );
+
+      await expect(service.create('user-1', { name: 'New List' })).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
     it('delegates to repository and returns shaped list with zero aggregates', async () => {
       repository.create.mockResolvedValue({
         id: 'list-1',
@@ -90,7 +115,7 @@ describe('ListsService', () => {
 
       const result = await service.create('user-1', { name: 'New List' });
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' });
+      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' }, undefined);
       expect(result).toEqual({
         id: 'list-1',
         name: 'New List',
@@ -112,10 +137,11 @@ describe('ListsService', () => {
 
       const result = await service.create('user-1', { name: 'Garage', location: '123 Main St' });
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', {
-        name: 'Garage',
-        location: '123 Main St',
-      });
+      expect(repository.create).toHaveBeenCalledWith(
+        'user-1',
+        { name: 'Garage', location: '123 Main St' },
+        undefined,
+      );
       expect(result.location).toBe('123 Main St');
     });
   });
