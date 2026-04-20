@@ -62,6 +62,17 @@ export class LimitsService {
   }
 
   /**
+   * Best-effort preflight check used before expensive side effects (e.g. image
+   * upload). The authoritative cap is still enforced by {@link withItemCapLock}.
+   */
+  async assertCanCreateItem(userId: string): Promise<void> {
+    const { maxItems } = this.config.get(await this.repository.getUserTier(userId));
+    if (!isFinite(maxItems)) return;
+    const count = await this.repository.countItemsByUser(userId);
+    if (count >= maxItems) throw limitReached(maxItems);
+  }
+
+  /**
    * Returns true when a counter row was incremented (caller must pair with
    * {@link releaseAiReservation} on failure). Returns false when the tier has
    * no cap (premium) so no release is needed.

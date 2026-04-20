@@ -40,6 +40,7 @@ describe('LimitsService', () => {
           provide: LimitsRepository,
           useValue: {
             getUserTier: jest.fn(),
+            countItemsByUser: jest.fn(),
             reserveAiCall: jest.fn(),
             releaseAiReservation: jest.fn(),
           },
@@ -207,6 +208,37 @@ describe('LimitsService', () => {
       expect(call[0]).toBe('user-1');
       expect(call[1]).toMatch(/^\d{4}-\d{2}$/);
       expect(repository.getUserTier).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('assertCanCreateItem', () => {
+    it('throws LIMIT_REACHED when free user is at item cap', async () => {
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
+      repository.countItemsByUser.mockResolvedValue(50);
+
+      await expect(service.assertCanCreateItem('user-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('resolves when below cap', async () => {
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
+      repository.countItemsByUser.mockResolvedValue(49);
+
+      await expect(service.assertCanCreateItem('user-1')).resolves.toBeUndefined();
+    });
+
+    it('skips count for premium (infinite cap)', async () => {
+      repository.getUserTier.mockResolvedValue('premium');
+      tierConfig.get.mockReturnValue({
+        maxLists: Infinity,
+        maxItems: Infinity,
+        maxAiCallsPerMonth: Infinity,
+      });
+
+      await service.assertCanCreateItem('user-1');
+
+      expect(repository.countItemsByUser).not.toHaveBeenCalled();
     });
   });
 });

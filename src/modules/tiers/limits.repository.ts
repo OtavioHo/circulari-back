@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,9 +12,13 @@ export class LimitsRepository {
       select: { tier: true },
     });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UnauthorizedException('User not found');
     }
     return user.tier;
+  }
+
+  async countItemsByUser(userId: string): Promise<number> {
+    return this.prisma.item.count({ where: { list: { user_id: userId } } });
   }
 
   async reserveAiCall(userId: string, month: string, max: number): Promise<boolean> {

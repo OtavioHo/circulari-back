@@ -68,7 +68,7 @@ describe('ItemsService', () => {
   let itemsRepository: jest.Mocked<ItemsRepository>;
   let listsRepository: jest.Mocked<ListsRepository>;
   let storageService: { upload: jest.Mock; getSignedUrl: jest.Mock };
-  let limits: { withItemCapLock: jest.Mock };
+  let limits: { withItemCapLock: jest.Mock; assertCanCreateItem: jest.Mock };
 
   beforeEach(async () => {
     storageService = {
@@ -81,6 +81,7 @@ describe('ItemsService', () => {
         .mockImplementation(async (_userId: string, fn: (tx: unknown) => Promise<unknown>) =>
           fn(undefined),
         ),
+      assertCanCreateItem: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -179,6 +180,19 @@ describe('ItemsService', () => {
       );
       expect(itemsRepository.createWithImage).not.toHaveBeenCalled();
       expect(itemsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('skips storage upload when preflight cap check rejects', async () => {
+      listsRepository.findOneByUser.mockResolvedValue(mockList);
+      limits.assertCanCreateItem.mockRejectedValue(
+        new ForbiddenException({ code: 'LIMIT_REACHED', limit: 50 }),
+      );
+
+      await expect(service.create('user-1', dto, fakeImageFile())).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(storageService.upload).not.toHaveBeenCalled();
+      expect(itemsRepository.createWithImage).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException for invalid MIME type (magic bytes mismatch)', async () => {

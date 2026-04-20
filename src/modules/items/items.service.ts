@@ -73,6 +73,8 @@ export class ItemsService {
       return this.mapItem(item);
     }
 
+    await this.limits.assertCanCreateItem(userId);
+
     const actualMime = validateImageMagicBytes(imageFile.buffer);
     const itemId = randomUUID();
     const key = `items/${itemId}/${randomUUID()}.${extFromMime(actualMime)}`;

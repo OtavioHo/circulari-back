@@ -84,9 +84,12 @@ export class RevenueCatService {
     if (!this.apiKey) return;
 
     let data: unknown;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5_000);
     try {
       const res = await fetch(`${this.apiBaseUrl}/subscribers/${encodeURIComponent(userId)}`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
+        signal: controller.signal,
       });
       if (!res.ok) {
         this.logger.warn(`Reconcile failed for ${userId}: HTTP ${res.status}`);
@@ -98,6 +101,8 @@ export class RevenueCatService {
         `Reconcile request failed for ${userId}: ${err instanceof Error ? err.message : String(err)}`,
       );
       return;
+    } finally {
+      clearTimeout(timeout);
     }
 
     const tier = this.tierFromSubscriber(data);

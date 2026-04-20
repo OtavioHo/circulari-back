@@ -50,7 +50,14 @@ export class AiService {
       return result;
     } finally {
       if (!success && reserved) {
-        await this.limits.releaseAiReservation(userId).catch(() => undefined);
+        try {
+          await this.limits.releaseAiReservation(userId);
+        } catch (err) {
+          this.logger.error(
+            `Failed to release AI reservation for user ${userId} after analysis failure`,
+            err instanceof Error ? err.stack : String(err),
+          );
+        }
       }
     }
   }
