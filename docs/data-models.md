@@ -52,9 +52,9 @@ Global reference data — seeded on `prisma:seed`. Controls the picture set avai
 | user_id | uuid | FK → users |
 | name | string | |
 | location | string | nullable, plain text address |
-| color_id | uuid | FK → list_colors; non-nullable |
-| icon_id | uuid | FK → list_icons; non-nullable |
-| picture_id | uuid | FK → list_pictures; non-nullable |
+| color | string | FK → list_colors (hex_code); non-nullable |
+| icon | string | FK → list_icons (slug); non-nullable |
+| picture | string | FK → list_pictures (slug); non-nullable |
 | created_at | timestamp | |
 
 ## Item

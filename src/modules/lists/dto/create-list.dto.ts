@@ -10,6 +10,7 @@ export class CreateListDto {
   location?: string;
 
   @IsHexColor()
+  @IsNotEmpty()
   color_id: string;
 
   @IsString()
