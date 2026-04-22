@@ -54,9 +54,8 @@ model ProcessedWebhookEvent {
 }
 
 model ListColor {
-  id       String @id @default(uuid())
+  hex_code String @id
   name     String @unique
-  hex_code String
   order    Int    @default(0)
   lists    List[]
 
@@ -64,9 +63,8 @@ model ListColor {
 }
 
 model ListIcon {
-  id    String @id @default(uuid())
+  slug  String @id
   name  String @unique
-  slug  String @unique
   order Int    @default(0)
   lists List[]
 
@@ -74,8 +72,7 @@ model ListIcon {
 }
 
 model ListPicture {
-  id    String @id @default(uuid())
-  slug  String @unique
+  slug  String @id
   order Int    @default(0)
   lists List[]
 
@@ -93,9 +90,9 @@ model List {
   created_at DateTime @default(now()) @map("created_at")
 
   user    User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  color   ListColor   @relation(fields: [color_id], references: [id])
-  icon    ListIcon    @relation(fields: [icon_id], references: [id])
-  picture ListPicture @relation(fields: [picture_id], references: [id])
+  color   ListColor   @relation(fields: [color_id], references: [hex_code])
+  icon    ListIcon    @relation(fields: [icon_id], references: [slug])
+  picture ListPicture @relation(fields: [picture_id], references: [slug])
   items   Item[]
 
   @@index([user_id])

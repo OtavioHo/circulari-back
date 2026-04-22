@@ -24,34 +24,34 @@ const categories = [
 ];
 
 const listColors = [
-  { id: '00000000-0000-0000-0000-000000000001', name: 'Vermelho', hex_code: '#EF4444', order: 0 },
-  { id: '00000000-0000-0000-0000-000000000002', name: 'Laranja', hex_code: '#F97316', order: 1 },
-  { id: '00000000-0000-0000-0000-000000000003', name: 'Amarelo', hex_code: '#EAB308', order: 2 },
-  { id: '00000000-0000-0000-0000-000000000004', name: 'Verde', hex_code: '#22C55E', order: 3 },
-  { id: '00000000-0000-0000-0000-000000000005', name: 'Azul', hex_code: '#3B82F6', order: 4 },
-  { id: '00000000-0000-0000-0000-000000000006', name: 'Roxo', hex_code: '#A855F7', order: 5 },
-  { id: '00000000-0000-0000-0000-000000000007', name: 'Rosa', hex_code: '#EC4899', order: 6 },
-  { id: '00000000-0000-0000-0000-000000000008', name: 'Cinza', hex_code: '#6B7280', order: 7 },
+  { hex_code: '#EF4444', name: 'Vermelho', order: 0 },
+  { hex_code: '#F97316', name: 'Laranja', order: 1 },
+  { hex_code: '#EAB308', name: 'Amarelo', order: 2 },
+  { hex_code: '#22C55E', name: 'Verde', order: 3 },
+  { hex_code: '#3B82F6', name: 'Azul', order: 4 },
+  { hex_code: '#A855F7', name: 'Roxo', order: 5 },
+  { hex_code: '#EC4899', name: 'Rosa', order: 6 },
+  { hex_code: '#6B7280', name: 'Cinza', order: 7 },
 ];
 
 const listIcons = [
-  { id: '00000000-0000-0000-0000-000000000001', name: 'Lista', slug: 'list', order: 0 },
-  { id: '00000000-0000-0000-0000-000000000002', name: 'Carrinho', slug: 'shopping-cart', order: 1 },
-  { id: '00000000-0000-0000-0000-000000000003', name: 'Casa', slug: 'home', order: 2 },
-  { id: '00000000-0000-0000-0000-000000000004', name: 'Presente', slug: 'gift', order: 3 },
-  { id: '00000000-0000-0000-0000-000000000005', name: 'Etiqueta', slug: 'tag', order: 4 },
-  { id: '00000000-0000-0000-0000-000000000006', name: 'Maleta', slug: 'briefcase', order: 5 },
-  { id: '00000000-0000-0000-0000-000000000007', name: 'Coração', slug: 'heart', order: 6 },
-  { id: '00000000-0000-0000-0000-000000000008', name: 'Estrela', slug: 'star', order: 7 },
-  { id: '00000000-0000-0000-0000-000000000009', name: 'Livro', slug: 'book', order: 8 },
-  { id: '00000000-0000-0000-0000-000000000010', name: 'Ferramenta', slug: 'tool', order: 9 },
+  { slug: 'list', name: 'Lista', order: 0 },
+  { slug: 'shopping-cart', name: 'Carrinho', order: 1 },
+  { slug: 'home', name: 'Casa', order: 2 },
+  { slug: 'gift', name: 'Presente', order: 3 },
+  { slug: 'tag', name: 'Etiqueta', order: 4 },
+  { slug: 'briefcase', name: 'Maleta', order: 5 },
+  { slug: 'heart', name: 'Coração', order: 6 },
+  { slug: 'star', name: 'Estrela', order: 7 },
+  { slug: 'book', name: 'Livro', order: 8 },
+  { slug: 'tool', name: 'Ferramenta', order: 9 },
 ];
 
 const listPictures = [
-  { id: '00000000-0000-0000-0000-000000000001', slug: 'storage', order: 0 },
-  { id: '00000000-0000-0000-0000-000000000002', slug: 'beach_house', order: 1 },
-  { id: '00000000-0000-0000-0000-000000000003', slug: 'country_house', order: 2 },
-  { id: '00000000-0000-0000-0000-000000000004', slug: 'assets', order: 3 },
+  { slug: 'storage', order: 0 },
+  { slug: 'beach_house', order: 1 },
+  { slug: 'country_house', order: 2 },
+  { slug: 'assets', order: 3 },
 ];
 
 async function main() {
@@ -66,8 +66,8 @@ async function main() {
 
   for (const color of listColors) {
     await prisma.listColor.upsert({
-      where: { name: color.name },
-      update: { hex_code: color.hex_code, order: color.order },
+      where: { hex_code: color.hex_code },
+      update: { name: color.name, order: color.order },
       create: color,
     });
   }
@@ -75,8 +75,8 @@ async function main() {
 
   for (const icon of listIcons) {
     await prisma.listIcon.upsert({
-      where: { name: icon.name },
-      update: { slug: icon.slug, order: icon.order },
+      where: { slug: icon.slug },
+      update: { name: icon.name, order: icon.order },
       create: icon,
     });
   }

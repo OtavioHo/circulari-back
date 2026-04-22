@@ -39,7 +39,7 @@ describe('ListsController', () => {
 
   describe('getColors', () => {
     it('delegates to listsService.getColors', async () => {
-      const colors = [{ id: 'color-1', name: 'Vermelho', hex_code: '#EF4444', order: 0 }];
+      const colors = [{ hex_code: '#EF4444', name: 'Vermelho', order: 0 }];
       mockListsService.getColors.mockResolvedValue(colors);
 
       const result = await controller.getColors();
@@ -56,7 +56,7 @@ describe('ListsController', () => {
 
   describe('getIcons', () => {
     it('delegates to listsService.getIcons', async () => {
-      const icons = [{ id: 'icon-1', name: 'Lista', slug: 'list', order: 0 }];
+      const icons = [{ slug: 'list', name: 'Lista', order: 0 }];
       mockListsService.getIcons.mockResolvedValue(icons);
 
       const result = await controller.getIcons();
@@ -73,7 +73,7 @@ describe('ListsController', () => {
 
   describe('getPictures', () => {
     it('delegates to listsService.getPictures', async () => {
-      const pictures = [{ id: 'pic-1', slug: 'storage', order: 0 }];
+      const pictures = [{ slug: 'storage', order: 0 }];
       mockListsService.getPictures.mockResolvedValue(pictures);
 
       const result = await controller.getPictures();
@@ -109,7 +109,7 @@ describe('ListsController', () => {
 
   describe('create', () => {
     it('delegates to listsService.create with userId and dto', async () => {
-      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1', picture_id: 'pic-1' };
+      const dto = { name: 'New List', color_id: '#EF4444', icon_id: 'list', picture_id: 'storage' };
       const expected = {
         id: 'list-1',
         name: 'New List',

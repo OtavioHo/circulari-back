@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsHexColor, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateListDto {
   @IsString()
@@ -9,12 +9,14 @@ export class CreateListDto {
   @IsOptional()
   location?: string;
 
-  @IsUUID()
+  @IsHexColor()
   color_id: string;
 
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   icon_id: string;
 
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   picture_id: string;
 }

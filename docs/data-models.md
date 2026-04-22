@@ -21,9 +21,8 @@ Global reference data — seeded on `prisma:seed`. Controls the color palette av
 
 | Field | Type | Notes |
 |-------|------|-------|
-| id | uuid | PK |
-| name | string | unique; e.g. "Vermelho", "Azul" |
-| hex_code | string | CSS hex color, e.g. `#EF4444` |
+| hex_code | string | PK; CSS hex color, e.g. `#EF4444` |
+| name | string | unique; human-readable name, e.g. "Vermelho" |
 | order | integer | display order in the palette; default 0 |
 
 ## ListIcon
@@ -32,9 +31,8 @@ Global reference data — seeded on `prisma:seed`. Controls the icon set availab
 
 | Field | Type | Notes |
 |-------|------|-------|
-| id | uuid | PK |
+| slug | string | PK; icon key for the frontend, e.g. `shopping-cart` |
 | name | string | unique; human-readable name, e.g. "Carrinho" |
-| slug | string | unique; icon key for the frontend, e.g. `shopping-cart` |
 | order | integer | display order in the picker; default 0 |
 
 ## ListPicture
@@ -43,8 +41,7 @@ Global reference data — seeded on `prisma:seed`. Controls the picture set avai
 
 | Field | Type | Notes |
 |-------|------|-------|
-| id | uuid | PK |
-| slug | string | unique; asset key for the frontend, e.g. `beach_house` |
+| slug | string | PK; asset key for the frontend, e.g. `beach_house` |
 | order | integer | display order in the picker; default 0 |
 
 ## List
