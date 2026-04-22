@@ -25,29 +25,29 @@ INSERT INTO "list_icons" ("slug", "name", "order")
 VALUES ('list', 'Lista', 0)
 ON CONFLICT ("slug") DO NOTHING;
 
--- Add color_id and icon_id as nullable with defaults
+-- Add color and icon as nullable with defaults
 ALTER TABLE "lists"
-  ADD COLUMN "color_id" TEXT DEFAULT '#EF4444',
-  ADD COLUMN "icon_id"  TEXT DEFAULT 'list';
+  ADD COLUMN "color" TEXT DEFAULT '#EF4444',
+  ADD COLUMN "icon"  TEXT DEFAULT 'list';
 
 -- Back-fill existing rows
 UPDATE "lists"
 SET
-  "color_id" = '#EF4444',
-  "icon_id"  = 'list'
-WHERE "color_id" IS NULL OR "icon_id" IS NULL;
+  "color" = '#EF4444',
+  "icon"  = 'list'
+WHERE "color" IS NULL OR "icon" IS NULL;
 
 -- Make columns NOT NULL
-ALTER TABLE "lists" ALTER COLUMN "color_id" SET NOT NULL;
-ALTER TABLE "lists" ALTER COLUMN "icon_id"  SET NOT NULL;
+ALTER TABLE "lists" ALTER COLUMN "color" SET NOT NULL;
+ALTER TABLE "lists" ALTER COLUMN "icon"  SET NOT NULL;
 
 -- Drop the DEFAULT
-ALTER TABLE "lists" ALTER COLUMN "color_id" DROP DEFAULT;
-ALTER TABLE "lists" ALTER COLUMN "icon_id"  DROP DEFAULT;
+ALTER TABLE "lists" ALTER COLUMN "color" DROP DEFAULT;
+ALTER TABLE "lists" ALTER COLUMN "icon"  DROP DEFAULT;
 
 -- Add FK constraints
 ALTER TABLE "lists"
-  ADD CONSTRAINT "lists_color_id_fkey" FOREIGN KEY ("color_id") REFERENCES "list_colors"("hex_code") ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT "lists_color_fkey" FOREIGN KEY ("color") REFERENCES "list_colors"("hex_code") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE "lists"
-  ADD CONSTRAINT "lists_icon_id_fkey" FOREIGN KEY ("icon_id") REFERENCES "list_icons"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT "lists_icon_fkey" FOREIGN KEY ("icon") REFERENCES "list_icons"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;

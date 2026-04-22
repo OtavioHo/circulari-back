@@ -84,9 +84,9 @@ model List {
   user_id    String
   name       String
   location   String?
-  color_id   String
-  icon_id    String
-  picture_id String
+  color_id   String @map("color")
+  icon_id    String @map("icon")
+  picture_id String @map("picture")
   created_at DateTime @default(now()) @map("created_at")
 
   user    User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
