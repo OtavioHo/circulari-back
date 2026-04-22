@@ -19,6 +19,10 @@ export class ListsService {
     return this.repository.findAllIcons();
   }
 
+  getPictures() {
+    return this.repository.findAllPictures();
+  }
+
   async getAll(userId: string) {
     const lists = await this.repository.findAllByUser(userId);
     return lists.map((list) => ({
@@ -27,6 +31,7 @@ export class ListsService {
       location: list.location ?? null,
       color: list.color,
       icon: list.icon,
+      picture: list.picture,
       item_count: list._count.items,
       total_value: list.total_value,
       created_at: list.created_at,
@@ -43,6 +48,7 @@ export class ListsService {
       location: list.location ?? null,
       color_id: list.color_id,
       icon_id: list.icon_id,
+      picture_id: list.picture_id,
       item_count: 0,
       total_value: 0,
       created_at: list.created_at,
@@ -60,6 +66,7 @@ export class ListsService {
       location: list.location ?? null,
       color_id: list.color_id,
       icon_id: list.icon_id,
+      picture_id: list.picture_id,
       created_at: list.created_at,
     };
   }

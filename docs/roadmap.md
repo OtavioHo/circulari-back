@@ -18,6 +18,7 @@
 - [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
 - [x] Category reference table with seeded Portuguese values; `category_id` on items
 - [x] List color and icon selection (`GET /lists/colors`, `GET /lists/icons`; `color_id`/`icon_id` on lists)
+- [x] List picture selection (`GET /lists/pictures`; `picture_id` on lists; slug-based, 4 seeded presets)
 
 ## Milestone 3 — Image Upload + Storage <Badge type="tip" text="Implemented" />
 

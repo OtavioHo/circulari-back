@@ -11,6 +11,7 @@ describe('ListsController', () => {
   const mockListsService = {
     getColors: jest.fn(),
     getIcons: jest.fn(),
+    getPictures: jest.fn(),
     getAll: jest.fn(),
     create: jest.fn(),
     rename: jest.fn(),
@@ -70,6 +71,23 @@ describe('ListsController', () => {
     });
   });
 
+  describe('getPictures', () => {
+    it('delegates to listsService.getPictures', async () => {
+      const pictures = [{ id: 'pic-1', slug: 'storage', order: 0 }];
+      mockListsService.getPictures.mockResolvedValue(pictures);
+
+      const result = await controller.getPictures();
+
+      expect(mockListsService.getPictures).toHaveBeenCalled();
+      expect(result).toBe(pictures);
+    });
+
+    it('is NOT marked @Public so JwtAuthGuard protects it', () => {
+      const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, ListsController.prototype.getPictures);
+      expect(isPublic).toBeUndefined();
+    });
+  });
+
   describe('getAll', () => {
     it('delegates to listsService.getAll with userId from req.user.id', async () => {
       const expected = [
@@ -91,7 +109,7 @@ describe('ListsController', () => {
 
   describe('create', () => {
     it('delegates to listsService.create with userId and dto', async () => {
-      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1' };
+      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1', picture_id: 'pic-1' };
       const expected = {
         id: 'list-1',
         name: 'New List',

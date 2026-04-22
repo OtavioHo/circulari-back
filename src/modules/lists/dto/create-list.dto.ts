@@ -14,4 +14,7 @@ export class CreateListDto {
 
   @IsUUID()
   icon_id: string;
+
+  @IsUUID()
+  picture_id: string;
 }

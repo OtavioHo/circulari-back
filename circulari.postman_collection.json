@@ -237,6 +237,28 @@
           }
         },
         {
+          "name": "GET /lists/pictures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lists/pictures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                "pictures"
+              ]
+            }
+          }
+        },
+        {
           "name": "GET /lists",
           "request": {
             "method": "GET",
@@ -273,7 +295,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My First List\",\n  \"location\": \"123 Main St\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000005\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000002\"\n}"
+              "raw": "{\n  \"name\": \"My First List\",\n  \"location\": \"123 Main St\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000005\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000002\",\n  \"picture_id\": \"00000000-0000-0000-0000-000000000001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
@@ -302,7 +324,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated List Name\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000004\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000003\"\n}"
+              "raw": "{\n  \"name\": \"Updated List Name\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000004\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000003\",\n  \"picture_id\": \"00000000-0000-0000-0000-000000000002\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists/:id",

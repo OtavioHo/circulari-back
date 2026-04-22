@@ -37,6 +37,16 @@ Global reference data — seeded on `prisma:seed`. Controls the icon set availab
 | slug | string | unique; icon key for the frontend, e.g. `shopping-cart` |
 | order | integer | display order in the picker; default 0 |
 
+## ListPicture
+
+Global reference data — seeded on `prisma:seed`. Controls the picture set available when creating or editing a list. The frontend resolves slugs to image assets.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| slug | string | unique; asset key for the frontend, e.g. `beach_house` |
+| order | integer | display order in the picker; default 0 |
+
 ## List
 
 | Field | Type | Notes |
@@ -47,6 +57,7 @@ Global reference data — seeded on `prisma:seed`. Controls the icon set availab
 | location | string | nullable, plain text address |
 | color_id | uuid | FK → list_colors; non-nullable |
 | icon_id | uuid | FK → list_icons; non-nullable |
+| picture_id | uuid | FK → list_pictures; non-nullable |
 | created_at | timestamp | |
 
 ## Item

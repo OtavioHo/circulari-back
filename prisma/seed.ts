@@ -47,6 +47,13 @@ const listIcons = [
   { id: '00000000-0000-0000-0000-000000000010', name: 'Ferramenta', slug: 'tool', order: 9 },
 ];
 
+const listPictures = [
+  { id: '00000000-0000-0000-0000-000000000001', slug: 'storage', order: 0 },
+  { id: '00000000-0000-0000-0000-000000000002', slug: 'beach_house', order: 1 },
+  { id: '00000000-0000-0000-0000-000000000003', slug: 'country_house', order: 2 },
+  { id: '00000000-0000-0000-0000-000000000004', slug: 'assets', order: 3 },
+];
+
 async function main() {
   for (const name of categories) {
     await prisma.category.upsert({
@@ -74,6 +81,15 @@ async function main() {
     });
   }
   console.log(`Seeded ${listIcons.length} list icons.`);
+
+  for (const picture of listPictures) {
+    await prisma.listPicture.upsert({
+      where: { slug: picture.slug },
+      update: { order: picture.order },
+      create: picture,
+    });
+  }
+  console.log(`Seeded ${listPictures.length} list pictures.`);
 }
 
 main()

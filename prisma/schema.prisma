@@ -73,6 +73,15 @@ model ListIcon {
   @@map("list_icons")
 }
 
+model ListPicture {
+  id    String @id @default(uuid())
+  slug  String @unique
+  order Int    @default(0)
+  lists List[]
+
+  @@map("list_pictures")
+}
+
 model List {
   id         String   @id @default(uuid())
   user_id    String
@@ -80,12 +89,14 @@ model List {
   location   String?
   color_id   String
   icon_id    String
+  picture_id String
   created_at DateTime @default(now()) @map("created_at")
 
-  user  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  color ListColor @relation(fields: [color_id], references: [id])
-  icon  ListIcon  @relation(fields: [icon_id], references: [id])
-  items Item[]
+  user    User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  color   ListColor   @relation(fields: [color_id], references: [id])
+  icon    ListIcon    @relation(fields: [icon_id], references: [id])
+  picture ListPicture @relation(fields: [picture_id], references: [id])
+  items   Item[]
 
   @@index([user_id])
   @@map("lists")

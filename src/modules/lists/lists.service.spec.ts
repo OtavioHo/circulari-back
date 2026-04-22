@@ -10,6 +10,7 @@ describe('ListsService', () => {
 
   const defaultColor = { id: 'color-1', name: 'Vermelho', hex_code: '#EF4444', order: 0 };
   const defaultIcon = { id: 'icon-1', name: 'Lista', slug: 'list', order: 0 };
+  const defaultPicture = { id: 'pic-1', slug: 'storage', order: 0 };
   let limits: { withListCapLock: jest.Mock };
 
   beforeEach(async () => {
@@ -29,6 +30,7 @@ describe('ListsService', () => {
           useValue: {
             findAllColors: jest.fn(),
             findAllIcons: jest.fn(),
+            findAllPictures: jest.fn(),
             findAllByUser: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
@@ -70,6 +72,18 @@ describe('ListsService', () => {
     });
   });
 
+  describe('getPictures', () => {
+    it('delegates to repository.findAllPictures', async () => {
+      const pictures = [defaultPicture];
+      repository.findAllPictures.mockResolvedValue(pictures);
+
+      const result = await service.getPictures();
+
+      expect(repository.findAllPictures).toHaveBeenCalled();
+      expect(result).toBe(pictures);
+    });
+  });
+
   describe('getAll', () => {
     it('returns empty array when user has no lists', async () => {
       repository.findAllByUser.mockResolvedValue([]);
@@ -88,8 +102,10 @@ describe('ListsService', () => {
           user_id: 'user-1',
           color_id: 'color-1',
           icon_id: 'icon-1',
+          picture_id: 'pic-1',
           color: defaultColor,
           icon: defaultIcon,
+          picture: defaultPicture,
           created_at: new Date('2026-01-01'),
           _count: { items: 2 },
           total_value: 15.5,
@@ -115,8 +131,10 @@ describe('ListsService', () => {
           user_id: 'user-1',
           color_id: 'color-1',
           icon_id: 'icon-1',
+          picture_id: 'pic-1',
           color: defaultColor,
           icon: defaultIcon,
+          picture: defaultPicture,
           created_at: new Date('2026-01-01'),
           _count: { items: 0 },
           total_value: 0,
@@ -136,7 +154,12 @@ describe('ListsService', () => {
       );
 
       await expect(
-        service.create('user-1', { name: 'New List', color_id: 'color-1', icon_id: 'icon-1' }),
+        service.create('user-1', {
+          name: 'New List',
+          color_id: 'color-1',
+          icon_id: 'icon-1',
+          picture_id: 'pic-1',
+        }),
       ).rejects.toThrow(ForbiddenException);
       expect(repository.create).not.toHaveBeenCalled();
     });
@@ -148,11 +171,12 @@ describe('ListsService', () => {
         location: null,
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
         user_id: 'user-1',
         created_at: new Date('2026-01-01'),
       });
 
-      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1' };
+      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1', picture_id: 'pic-1' };
       const result = await service.create('user-1', dto);
 
       expect(repository.create).toHaveBeenCalledWith('user-1', dto, undefined);
@@ -162,6 +186,7 @@ describe('ListsService', () => {
         location: null,
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
         item_count: 0,
         total_value: 0,
         created_at: new Date('2026-01-01'),
@@ -175,6 +200,7 @@ describe('ListsService', () => {
         location: '123 Main St',
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
         user_id: 'user-1',
         created_at: new Date('2026-01-01'),
       });
@@ -184,6 +210,7 @@ describe('ListsService', () => {
         location: '123 Main St',
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
       };
       const result = await service.create('user-1', dto);
 
@@ -201,6 +228,7 @@ describe('ListsService', () => {
         location: null,
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
         created_at: new Date('2026-01-01'),
       });
 
@@ -218,6 +246,7 @@ describe('ListsService', () => {
         location: '456 Oak Ave',
         color_id: 'color-1',
         icon_id: 'icon-1',
+        picture_id: 'pic-1',
         created_at: new Date('2026-01-01'),
       });
 

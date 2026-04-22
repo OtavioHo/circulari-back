@@ -35,6 +35,11 @@ export class ListsController {
     return this.listsService.getIcons();
   }
 
+  @Get('pictures')
+  getPictures() {
+    return this.listsService.getPictures();
+  }
+
   @Get()
   getAll(@Req() req: Request) {
     const user = req.user as { id: string };

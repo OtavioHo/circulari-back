@@ -16,4 +16,8 @@ export class UpdateListDto {
   @IsUUID()
   @IsOptional()
   icon_id?: string;
+
+  @IsUUID()
+  @IsOptional()
+  picture_id?: string;
 }
