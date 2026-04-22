@@ -44,6 +44,9 @@ const mockList = {
   user_id: 'user-1',
   name: 'My List',
   location: null,
+  color_id: '#EF4444',
+  icon_id: 'list',
+  picture_id: 'storage',
   created_at: new Date(),
 };
 

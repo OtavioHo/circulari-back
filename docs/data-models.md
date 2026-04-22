@@ -15,6 +15,35 @@
 | tier | string | `"free"` or `"premium"`; default `"free"`. Updated by RevenueCat webhooks and login reconciliation. |
 | created_at | timestamp | |
 
+## ListColor
+
+Global reference data — seeded on `prisma:seed`. Controls the color palette available when creating or editing a list.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| hex_code | string | PK; CSS hex color, e.g. `#EF4444` |
+| name | string | unique; human-readable name, e.g. "Vermelho" |
+| order | integer | display order in the palette; default 0 |
+
+## ListIcon
+
+Global reference data — seeded on `prisma:seed`. Controls the icon set available when creating or editing a list.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| slug | string | PK; icon key for the frontend, e.g. `shopping-cart` |
+| name | string | unique; human-readable name, e.g. "Carrinho" |
+| order | integer | display order in the picker; default 0 |
+
+## ListPicture
+
+Global reference data — seeded on `prisma:seed`. Controls the picture set available when creating or editing a list. The frontend resolves slugs to image assets.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| slug | string | PK; asset key for the frontend, e.g. `beach_house` |
+| order | integer | display order in the picker; default 0 |
+
 ## List
 
 | Field | Type | Notes |
@@ -23,6 +52,9 @@
 | user_id | uuid | FK → users |
 | name | string | |
 | location | string | nullable, plain text address |
+| color | string | FK → list_colors (hex_code); non-nullable |
+| icon | string | FK → list_icons (slug); non-nullable |
+| picture | string | FK → list_pictures (slug); non-nullable |
 | created_at | timestamp | |
 
 ## Item

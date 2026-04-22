@@ -25,6 +25,21 @@ export class ListsController {
     private readonly itemsService: ItemsService,
   ) {}
 
+  @Get('colors')
+  getColors() {
+    return this.listsService.getColors();
+  }
+
+  @Get('icons')
+  getIcons() {
+    return this.listsService.getIcons();
+  }
+
+  @Get('pictures')
+  getPictures() {
+    return this.listsService.getPictures();
+  }
+
   @Get()
   getAll(@Req() req: Request) {
     const user = req.user as { id: string };

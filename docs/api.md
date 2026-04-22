@@ -44,24 +44,38 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | /lists/colors | All available list colors (ordered) |
+| GET | /lists/icons | All available list icons (ordered) |
+| GET | /lists/pictures | All available list pictures (ordered) |
 | GET | /lists | All lists for authenticated user |
 | GET | /lists/:id/items | Paginated items for a specific list |
 | POST | /lists | Create list |
-| PATCH | /lists/:id | Rename list |
+| PATCH | /lists/:id | Update list |
 | DELETE | /lists/:id | Delete list and all its items |
 
 ```json
+// GET /lists/colors — response 200
+[{ "hex_code": "#rrggbb", "name": "string", "order": 0 }]
+
+// GET /lists/icons — response 200
+[{ "slug": "string", "name": "string", "order": 0 }]
+
+// GET /lists/pictures — response 200
+[{ "slug": "string", "order": 0 }]
+
 // POST /lists — request
-{ "name": "string", "location": "string" }   // location optional
+{ "name": "string", "location": "string", "color_id": "#rrggbb", "icon_id": "slug", "picture_id": "slug" }
+// location optional; color_id (hex), icon_id (slug), picture_id (slug) required
 
 // PATCH /lists/:id — request
-{ "name": "string", "location": "string" }   // location optional
+{ "name": "string", "location": "string", "color_id": "#rrggbb", "icon_id": "slug", "picture_id": "slug" }
+// location, color_id, icon_id, picture_id all optional
 
 // PATCH /lists/:id — response 200
-{ "id": "uuid", "name": "string", "location": "string | null", "created_at": "timestamp" }
+{ "id": "uuid", "name": "string", "location": "string | null", "color_id": "#rrggbb", "icon_id": "slug", "picture_id": "slug", "created_at": "timestamp" }
 
 // GET /lists — response 200
-[{ "id": "uuid", "name": "string", "location": "string | null", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
+[{ "id": "uuid", "name": "string", "location": "string | null", "color": { "hex_code": "#rrggbb", "name": "string", "order": 0 }, "icon": { "slug": "string", "name": "string", "order": 0 }, "picture": { "slug": "string", "order": 0 }, "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
 
 // GET /lists/:id/items — query params
 // cursor?: uuid   — ID of the last item seen (omit for first page)

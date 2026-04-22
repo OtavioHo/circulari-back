@@ -7,6 +7,10 @@ import { LimitsService } from '../tiers/limits.service';
 describe('ListsService', () => {
   let service: ListsService;
   let repository: jest.Mocked<ListsRepository>;
+
+  const defaultColor = { hex_code: '#EF4444', name: 'Vermelho', order: 0 };
+  const defaultIcon = { slug: 'list', name: 'Lista', order: 0 };
+  const defaultPicture = { slug: 'storage', order: 0 };
   let limits: { withListCapLock: jest.Mock };
 
   beforeEach(async () => {
@@ -24,6 +28,9 @@ describe('ListsService', () => {
         {
           provide: ListsRepository,
           useValue: {
+            findAllColors: jest.fn(),
+            findAllIcons: jest.fn(),
+            findAllPictures: jest.fn(),
             findAllByUser: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
@@ -39,6 +46,42 @@ describe('ListsService', () => {
 
     service = module.get<ListsService>(ListsService);
     repository = module.get(ListsRepository);
+  });
+
+  describe('getColors', () => {
+    it('delegates to repository.findAllColors', async () => {
+      const colors = [defaultColor];
+      repository.findAllColors.mockResolvedValue(colors);
+
+      const result = await service.getColors();
+
+      expect(repository.findAllColors).toHaveBeenCalled();
+      expect(result).toBe(colors);
+    });
+  });
+
+  describe('getIcons', () => {
+    it('delegates to repository.findAllIcons', async () => {
+      const icons = [defaultIcon];
+      repository.findAllIcons.mockResolvedValue(icons);
+
+      const result = await service.getIcons();
+
+      expect(repository.findAllIcons).toHaveBeenCalled();
+      expect(result).toBe(icons);
+    });
+  });
+
+  describe('getPictures', () => {
+    it('delegates to repository.findAllPictures', async () => {
+      const pictures = [defaultPicture];
+      repository.findAllPictures.mockResolvedValue(pictures);
+
+      const result = await service.getPictures();
+
+      expect(repository.findAllPictures).toHaveBeenCalled();
+      expect(result).toBe(pictures);
+    });
   });
 
   describe('getAll', () => {
@@ -57,6 +100,12 @@ describe('ListsService', () => {
           name: 'My List',
           location: null,
           user_id: 'user-1',
+          color_id: '#EF4444',
+          icon_id: 'list',
+          picture_id: 'storage',
+          color: defaultColor,
+          icon: defaultIcon,
+          picture: defaultPicture,
           created_at: new Date('2026-01-01'),
           _count: { items: 2 },
           total_value: 15.5,
@@ -80,6 +129,12 @@ describe('ListsService', () => {
           name: 'My List',
           location: null,
           user_id: 'user-1',
+          color_id: '#EF4444',
+          icon_id: 'list',
+          picture_id: 'storage',
+          color: defaultColor,
+          icon: defaultIcon,
+          picture: defaultPicture,
           created_at: new Date('2026-01-01'),
           _count: { items: 0 },
           total_value: 0,
@@ -98,9 +153,14 @@ describe('ListsService', () => {
         new ForbiddenException({ code: 'LIMIT_REACHED', limit: 3 }),
       );
 
-      await expect(service.create('user-1', { name: 'New List' })).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.create('user-1', {
+          name: 'New List',
+          color_id: '#EF4444',
+          icon_id: 'list',
+          picture_id: 'storage',
+        }),
+      ).rejects.toThrow(ForbiddenException);
       expect(repository.create).not.toHaveBeenCalled();
     });
 
@@ -109,17 +169,24 @@ describe('ListsService', () => {
         id: 'list-1',
         name: 'New List',
         location: null,
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
         user_id: 'user-1',
         created_at: new Date('2026-01-01'),
       });
 
-      const result = await service.create('user-1', { name: 'New List' });
+      const dto = { name: 'New List', color_id: '#EF4444', icon_id: 'list', picture_id: 'pic-1' };
+      const result = await service.create('user-1', dto);
 
-      expect(repository.create).toHaveBeenCalledWith('user-1', { name: 'New List' }, undefined);
+      expect(repository.create).toHaveBeenCalledWith('user-1', dto, undefined);
       expect(result).toEqual({
         id: 'list-1',
         name: 'New List',
         location: null,
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
         item_count: 0,
         total_value: 0,
         created_at: new Date('2026-01-01'),
@@ -131,17 +198,23 @@ describe('ListsService', () => {
         id: 'list-2',
         name: 'Garage',
         location: '123 Main St',
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
         user_id: 'user-1',
         created_at: new Date('2026-01-01'),
       });
 
-      const result = await service.create('user-1', { name: 'Garage', location: '123 Main St' });
+      const dto = {
+        name: 'Garage',
+        location: '123 Main St',
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
+      };
+      const result = await service.create('user-1', dto);
 
-      expect(repository.create).toHaveBeenCalledWith(
-        'user-1',
-        { name: 'Garage', location: '123 Main St' },
-        undefined,
-      );
+      expect(repository.create).toHaveBeenCalledWith('user-1', dto, undefined);
       expect(result.location).toBe('123 Main St');
     });
   });
@@ -153,6 +226,9 @@ describe('ListsService', () => {
         user_id: 'user-1',
         name: 'Updated Name',
         location: null,
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
         created_at: new Date('2026-01-01'),
       });
 
@@ -168,6 +244,9 @@ describe('ListsService', () => {
         user_id: 'user-1',
         name: 'My List',
         location: '456 Oak Ave',
+        color_id: '#EF4444',
+        icon_id: 'list',
+        picture_id: 'storage',
         created_at: new Date('2026-01-01'),
       });
 

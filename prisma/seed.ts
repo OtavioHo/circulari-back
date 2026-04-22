@@ -23,6 +23,37 @@ const categories = [
   'Outros',
 ];
 
+const listColors = [
+  { hex_code: '#EF4444', name: 'Vermelho', order: 0 },
+  { hex_code: '#F97316', name: 'Laranja', order: 1 },
+  { hex_code: '#EAB308', name: 'Amarelo', order: 2 },
+  { hex_code: '#22C55E', name: 'Verde', order: 3 },
+  { hex_code: '#3B82F6', name: 'Azul', order: 4 },
+  { hex_code: '#A855F7', name: 'Roxo', order: 5 },
+  { hex_code: '#EC4899', name: 'Rosa', order: 6 },
+  { hex_code: '#6B7280', name: 'Cinza', order: 7 },
+];
+
+const listIcons = [
+  { slug: 'list', name: 'Lista', order: 0 },
+  { slug: 'shopping-cart', name: 'Carrinho', order: 1 },
+  { slug: 'home', name: 'Casa', order: 2 },
+  { slug: 'gift', name: 'Presente', order: 3 },
+  { slug: 'tag', name: 'Etiqueta', order: 4 },
+  { slug: 'briefcase', name: 'Maleta', order: 5 },
+  { slug: 'heart', name: 'Coração', order: 6 },
+  { slug: 'star', name: 'Estrela', order: 7 },
+  { slug: 'book', name: 'Livro', order: 8 },
+  { slug: 'tool', name: 'Ferramenta', order: 9 },
+];
+
+const listPictures = [
+  { slug: 'storage', order: 0 },
+  { slug: 'beach_house', order: 1 },
+  { slug: 'country_house', order: 2 },
+  { slug: 'assets', order: 3 },
+];
+
 async function main() {
   for (const name of categories) {
     await prisma.category.upsert({
@@ -32,6 +63,33 @@ async function main() {
     });
   }
   console.log(`Seeded ${categories.length} categories.`);
+
+  for (const color of listColors) {
+    await prisma.listColor.upsert({
+      where: { hex_code: color.hex_code },
+      update: { name: color.name, order: color.order },
+      create: color,
+    });
+  }
+  console.log(`Seeded ${listColors.length} list colors.`);
+
+  for (const icon of listIcons) {
+    await prisma.listIcon.upsert({
+      where: { slug: icon.slug },
+      update: { name: icon.name, order: icon.order },
+      create: icon,
+    });
+  }
+  console.log(`Seeded ${listIcons.length} list icons.`);
+
+  for (const picture of listPictures) {
+    await prisma.listPicture.upsert({
+      where: { slug: picture.slug },
+      update: { order: picture.order },
+      create: picture,
+    });
+  }
+  console.log(`Seeded ${listPictures.length} list pictures.`);
 }
 
 main()

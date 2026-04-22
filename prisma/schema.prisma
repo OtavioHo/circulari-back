@@ -53,15 +53,47 @@ model ProcessedWebhookEvent {
   @@map("processed_webhook_events")
 }
 
+model ListColor {
+  hex_code String @id
+  name     String @unique
+  order    Int    @default(0)
+  lists    List[]
+
+  @@map("list_colors")
+}
+
+model ListIcon {
+  slug  String @id
+  name  String @unique
+  order Int    @default(0)
+  lists List[]
+
+  @@map("list_icons")
+}
+
+model ListPicture {
+  slug  String @id
+  order Int    @default(0)
+  lists List[]
+
+  @@map("list_pictures")
+}
+
 model List {
   id         String   @id @default(uuid())
   user_id    String
   name       String
   location   String?
+  color_id   String @map("color")
+  icon_id    String @map("icon")
+  picture_id String @map("picture")
   created_at DateTime @default(now()) @map("created_at")
 
-  user  User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  items Item[]
+  user    User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  color   ListColor   @relation(fields: [color_id], references: [hex_code])
+  icon    ListIcon    @relation(fields: [icon_id], references: [slug])
+  picture ListPicture @relation(fields: [picture_id], references: [slug])
+  items   Item[]
 
   @@index([user_id])
   @@map("lists")
