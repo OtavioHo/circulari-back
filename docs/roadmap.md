@@ -17,6 +17,7 @@
 - [x] Global item search (`GET /items?search=`)
 - [x] Paginated items by list (`GET /lists/:id/items` — cursor-based)
 - [x] Category reference table with seeded Portuguese values; `category_id` on items
+- [x] List color and icon selection (`GET /lists/colors`, `GET /lists/icons`; `color_id`/`icon_id` on lists)
 
 ## Milestone 3 — Image Upload + Storage <Badge type="tip" text="Implemented" />
 

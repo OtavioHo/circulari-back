@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class UpdateListDto {
   @IsString()
@@ -8,4 +8,12 @@ export class UpdateListDto {
   @IsString()
   @IsOptional()
   location?: string;
+
+  @IsUUID()
+  @IsOptional()
+  color_id?: string;
+
+  @IsUUID()
+  @IsOptional()
+  icon_id?: string;
 }

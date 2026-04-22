@@ -8,10 +8,18 @@ import { Prisma } from '../../generated/prisma/client';
 export class ListsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  findAllColors() {
+    return this.prisma.listColor.findMany({ orderBy: { order: 'asc' } });
+  }
+
+  findAllIcons() {
+    return this.prisma.listIcon.findMany({ orderBy: { order: 'asc' } });
+  }
+
   async findAllByUser(userId: string) {
     const lists = await this.prisma.list.findMany({
       where: { user_id: userId },
-      include: { _count: { select: { items: true } } },
+      include: { _count: { select: { items: true } }, color: true, icon: true },
       orderBy: { created_at: 'desc' },
     });
 
@@ -36,7 +44,13 @@ export class ListsRepository {
   create(userId: string, dto: CreateListDto, tx?: Prisma.TransactionClient) {
     const client = tx ?? this.prisma;
     return client.list.create({
-      data: { user_id: userId, name: dto.name, location: dto.location },
+      data: {
+        user_id: userId,
+        name: dto.name,
+        location: dto.location,
+        color_id: dto.color_id,
+        icon_id: dto.icon_id,
+      },
     });
   }
 
@@ -50,6 +64,8 @@ export class ListsRepository {
       data: {
         name: dto.name,
         ...(dto.location !== undefined && { location: dto.location }),
+        ...(dto.color_id !== undefined && { color_id: dto.color_id }),
+        ...(dto.icon_id !== undefined && { icon_id: dto.icon_id }),
       },
     });
     if (result.count === 0) return null;

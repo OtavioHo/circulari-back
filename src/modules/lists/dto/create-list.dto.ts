@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateListDto {
   @IsString()
@@ -8,4 +8,10 @@ export class CreateListDto {
   @IsString()
   @IsOptional()
   location?: string;
+
+  @IsUUID()
+  color_id: string;
+
+  @IsUUID()
+  icon_id: string;
 }

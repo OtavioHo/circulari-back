@@ -9,6 +9,8 @@ describe('ListsController', () => {
   let controller: ListsController;
 
   const mockListsService = {
+    getColors: jest.fn(),
+    getIcons: jest.fn(),
     getAll: jest.fn(),
     create: jest.fn(),
     rename: jest.fn(),
@@ -34,6 +36,40 @@ describe('ListsController', () => {
 
   const makeReq = (id: string) => ({ user: { id } }) as any;
 
+  describe('getColors', () => {
+    it('delegates to listsService.getColors', async () => {
+      const colors = [{ id: 'color-1', name: 'Vermelho', hex_code: '#EF4444', order: 0 }];
+      mockListsService.getColors.mockResolvedValue(colors);
+
+      const result = await controller.getColors();
+
+      expect(mockListsService.getColors).toHaveBeenCalled();
+      expect(result).toBe(colors);
+    });
+
+    it('is NOT marked @Public so JwtAuthGuard protects it', () => {
+      const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, ListsController.prototype.getColors);
+      expect(isPublic).toBeUndefined();
+    });
+  });
+
+  describe('getIcons', () => {
+    it('delegates to listsService.getIcons', async () => {
+      const icons = [{ id: 'icon-1', name: 'Lista', slug: 'list', order: 0 }];
+      mockListsService.getIcons.mockResolvedValue(icons);
+
+      const result = await controller.getIcons();
+
+      expect(mockListsService.getIcons).toHaveBeenCalled();
+      expect(result).toBe(icons);
+    });
+
+    it('is NOT marked @Public so JwtAuthGuard protects it', () => {
+      const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, ListsController.prototype.getIcons);
+      expect(isPublic).toBeUndefined();
+    });
+  });
+
   describe('getAll', () => {
     it('delegates to listsService.getAll with userId from req.user.id', async () => {
       const expected = [
@@ -55,7 +91,7 @@ describe('ListsController', () => {
 
   describe('create', () => {
     it('delegates to listsService.create with userId and dto', async () => {
-      const dto = { name: 'New List' };
+      const dto = { name: 'New List', color_id: 'color-1', icon_id: 'icon-1' };
       const expected = {
         id: 'list-1',
         name: 'New List',

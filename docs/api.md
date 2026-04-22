@@ -44,24 +44,34 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | /lists/colors | All available list colors (ordered) |
+| GET | /lists/icons | All available list icons (ordered) |
 | GET | /lists | All lists for authenticated user |
 | GET | /lists/:id/items | Paginated items for a specific list |
 | POST | /lists | Create list |
-| PATCH | /lists/:id | Rename list |
+| PATCH | /lists/:id | Update list |
 | DELETE | /lists/:id | Delete list and all its items |
 
 ```json
+// GET /lists/colors — response 200
+[{ "id": "uuid", "name": "string", "hex_code": "#rrggbb", "order": 0 }]
+
+// GET /lists/icons — response 200
+[{ "id": "uuid", "name": "string", "slug": "string", "order": 0 }]
+
 // POST /lists — request
-{ "name": "string", "location": "string" }   // location optional
+{ "name": "string", "location": "string", "color_id": "uuid", "icon_id": "uuid" }
+// location optional; color_id and icon_id required
 
 // PATCH /lists/:id — request
-{ "name": "string", "location": "string" }   // location optional
+{ "name": "string", "location": "string", "color_id": "uuid", "icon_id": "uuid" }
+// location, color_id, icon_id all optional
 
 // PATCH /lists/:id — response 200
-{ "id": "uuid", "name": "string", "location": "string | null", "created_at": "timestamp" }
+{ "id": "uuid", "name": "string", "location": "string | null", "color_id": "uuid", "icon_id": "uuid", "created_at": "timestamp" }
 
 // GET /lists — response 200
-[{ "id": "uuid", "name": "string", "location": "string | null", "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
+[{ "id": "uuid", "name": "string", "location": "string | null", "color": { "id": "uuid", "name": "string", "hex_code": "#rrggbb", "order": 0 }, "icon": { "id": "uuid", "name": "string", "slug": "string", "order": 0 }, "item_count": 0, "total_value": 0, "created_at": "timestamp" }]
 
 // GET /lists/:id/items — query params
 // cursor?: uuid   — ID of the last item seen (omit for first page)

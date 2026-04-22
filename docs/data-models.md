@@ -15,6 +15,28 @@
 | tier | string | `"free"` or `"premium"`; default `"free"`. Updated by RevenueCat webhooks and login reconciliation. |
 | created_at | timestamp | |
 
+## ListColor
+
+Global reference data — seeded on `prisma:seed`. Controls the color palette available when creating or editing a list.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| name | string | unique; e.g. "Vermelho", "Azul" |
+| hex_code | string | CSS hex color, e.g. `#EF4444` |
+| order | integer | display order in the palette; default 0 |
+
+## ListIcon
+
+Global reference data — seeded on `prisma:seed`. Controls the icon set available when creating or editing a list.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| name | string | unique; human-readable name, e.g. "Carrinho" |
+| slug | string | unique; icon key for the frontend, e.g. `shopping-cart` |
+| order | integer | display order in the picker; default 0 |
+
 ## List
 
 | Field | Type | Notes |
@@ -23,6 +45,8 @@
 | user_id | uuid | FK → users |
 | name | string | |
 | location | string | nullable, plain text address |
+| color_id | uuid | FK → list_colors; non-nullable |
+| icon_id | uuid | FK → list_icons; non-nullable |
 | created_at | timestamp | |
 
 ## Item

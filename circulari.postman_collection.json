@@ -193,6 +193,50 @@
       "name": "Lists",
       "item": [
         {
+          "name": "GET /lists/colors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lists/colors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                "colors"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /lists/icons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lists/icons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lists",
+                "icons"
+              ]
+            }
+          }
+        },
+        {
           "name": "GET /lists",
           "request": {
             "method": "GET",
@@ -229,7 +273,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"My First List\",\n  \"location\": \"123 Main St\"\n}"
+              "raw": "{\n  \"name\": \"My First List\",\n  \"location\": \"123 Main St\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000005\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000002\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
@@ -258,7 +302,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Renamed List\",\n  \"location\": \"456 Oak Ave\"\n}"
+              "raw": "{\n  \"name\": \"Updated List Name\",\n  \"color_id\": \"00000000-0000-0000-0000-000000000004\",\n  \"icon_id\": \"00000000-0000-0000-0000-000000000003\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists/:id",
@@ -308,7 +352,7 @@
                 {
                   "key": "limit",
                   "value": "20",
-                  "description": "Page size (1–100, default 20)"
+                  "description": "Page size (1\u2013100, default 20)"
                 }
               ],
               "variable": [
@@ -427,7 +471,7 @@
                   "key": "image",
                   "type": "file",
                   "src": "/path/to/image.jpg",
-                  "description": "Optional main image (JPEG, PNG, WebP, GIF — max 10 MB)",
+                  "description": "Optional main image (JPEG, PNG, WebP, GIF \u2014 max 10 MB)",
                   "disabled": true
                 }
               ]
@@ -475,7 +519,7 @@
                   "key": "image",
                   "type": "file",
                   "src": "/path/to/new-image.jpg",
-                  "description": "Optional replacement main image (JPEG, PNG, WebP, GIF — max 10 MB)",
+                  "description": "Optional replacement main image (JPEG, PNG, WebP, GIF \u2014 max 10 MB)",
                   "disabled": true
                 }
               ]
@@ -611,7 +655,7 @@
                   "key": "image",
                   "type": "file",
                   "src": "/path/to/image.jpg",
-                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF — max 10 MB)"
+                  "description": "Image file to analyze (JPEG, PNG, WebP, GIF \u2014 max 10 MB)"
                 }
               ]
             },
