@@ -92,6 +92,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
       "user_defined_value": 0,
       "category": { "id": "uuid", "name": "string" } | null,
       "images": [],
+      "list": { "name": "string", "color": { "hex_code": "#rrggbb", "name": "string" } },
       "created_at": "timestamp"
     }
   ],
@@ -114,6 +115,21 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | DELETE | /items/:id | Delete item |
 
 ```json
+// GET /items?search= — response 200
+[
+  {
+    "id": "uuid",
+    "name": "string",
+    "description": "string | null",
+    "quantity": 1,
+    "user_defined_value": "number | null",
+    "category": { "id": "uuid", "name": "string" } | null,
+    "images": [{ "url": "string", "is_main": true }],
+    "list": { "name": "string", "color": { "hex_code": "#rrggbb", "name": "string" } },
+    "created_at": "timestamp"
+  }
+]
+
 // POST /items — request (multipart/form-data)
 // Text fields:
 //   list_id: uuid (required)
@@ -136,6 +152,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "images": [
     { "url": "string", "is_main": true }
   ],  // empty array if no image uploaded
+  "list": { "name": "string", "color": { "hex_code": "#rrggbb", "name": "string" } },
   "created_at": "timestamp"
 }
 
@@ -154,6 +171,7 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
   "images": [
     { "url": "string", "is_main": true }
   ],  // empty array if no image exists
+  "list": { "name": "string", "color": { "hex_code": "#rrggbb", "name": "string" } },
   "created_at": "timestamp"
 }
 ```

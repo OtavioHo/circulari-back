@@ -17,6 +17,8 @@ const makeItem = (overrides: Partial<ReturnType<typeof baseItem>> = {}) => ({
   ...overrides,
 });
 
+const mockListColor = { hex_code: '#EF4444', name: 'Red' };
+
 function baseItem() {
   return {
     id: 'item-1',
@@ -35,6 +37,7 @@ function baseItem() {
       is_main: boolean;
       created_at: Date;
     }[],
+    list: { name: 'My List', color: mockListColor },
     created_at: new Date('2026-01-01'),
   };
 }
@@ -144,6 +147,7 @@ describe('ItemsService', () => {
         user_defined_value: null,
         category: null,
         images: [],
+        list: { name: 'My List', color: mockListColor },
         created_at: new Date('2026-01-01'),
       });
     });
@@ -368,6 +372,7 @@ describe('ItemsService', () => {
           user_defined_value: null,
           category: null,
           images: [],
+          list: { name: 'My List', color: mockListColor },
           created_at: createdAt,
         },
       ]);
