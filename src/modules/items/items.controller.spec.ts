@@ -31,18 +31,18 @@ describe('ItemsController', () => {
       const expected = [{ id: 'item-1', name: 'lamp' }];
       mockItemsService.search.mockResolvedValue(expected);
 
-      const result = await controller.search('lamp', makeReq('user-1'));
+      const result = await controller.search({ search: 'lamp' }, makeReq('user-1'));
 
-      expect(mockItemsService.search).toHaveBeenCalledWith('user-1', 'lamp');
+      expect(mockItemsService.search).toHaveBeenCalledWith('user-1', 'lamp', undefined, undefined);
       expect(result).toBe(expected);
     });
 
     it('defaults query to empty string when not provided', async () => {
-      mockItemsService.search.mockResolvedValue([]);
+      mockItemsService.search.mockResolvedValue({ data: [], nextCursor: null });
 
-      await controller.search(undefined as any, makeReq('user-1'));
+      await controller.search({}, makeReq('user-1'));
 
-      expect(mockItemsService.search).toHaveBeenCalledWith('user-1', '');
+      expect(mockItemsService.search).toHaveBeenCalledWith('user-1', '', undefined, undefined);
     });
 
     it('is NOT marked @Public so JwtAuthGuard protects it', () => {

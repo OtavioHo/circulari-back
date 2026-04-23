@@ -19,6 +19,7 @@ import { Request } from 'express';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { GetItemsDto } from './dto/get-items.dto';
 import { MAX_IMAGE_SIZE, multerImageFileFilter } from '../../common/utils/image-validation';
 
 const imageInterceptor = FileInterceptor('image', {
@@ -32,9 +33,9 @@ export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
   @Get()
-  search(@Query('search') query: string = '', @Req() req: Request) {
+  search(@Query() dto: GetItemsDto, @Req() req: Request) {
     const user = req.user as { id: string };
-    return this.itemsService.search(user.id, query);
+    return this.itemsService.search(user.id, dto.search ?? '', dto.cursor, dto.limit);
   }
 
   @Post()

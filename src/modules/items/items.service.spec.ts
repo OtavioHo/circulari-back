@@ -360,20 +360,23 @@ describe('ItemsService', () => {
 
       const result = await service.search('user-1', 'lamp');
 
-      expect(itemsRepository.searchByUser).toHaveBeenCalledWith('user-1', 'lamp');
-      expect(result).toEqual([
-        {
-          id: 'item-1',
-          name: 'vintage lamp',
-          description: null,
-          quantity: 1,
-          user_defined_value: null,
-          category: null,
-          images: [],
-          list: { name: 'My List', color: '#EF4444' },
-          created_at: createdAt,
-        },
-      ]);
+      expect(itemsRepository.searchByUser).toHaveBeenCalledWith('user-1', 'lamp', undefined, 15);
+      expect(result).toEqual({
+        data: [
+          {
+            id: 'item-1',
+            name: 'vintage lamp',
+            description: null,
+            quantity: 1,
+            user_defined_value: null,
+            category: null,
+            images: [],
+            list: { name: 'My List', color: '#EF4444' },
+            created_at: createdAt,
+          },
+        ],
+        nextCursor: null,
+      });
     });
 
     it('converts user_defined_value Decimal to number in search results', async () => {
@@ -383,7 +386,7 @@ describe('ItemsService', () => {
 
       const result = await service.search('user-1', 'lamp');
 
-      expect(result[0].user_defined_value).toBe(5.5);
+      expect((result as any).data[0].user_defined_value).toBe(5.5);
     });
 
     it('returns empty array when no items match', async () => {
@@ -391,7 +394,7 @@ describe('ItemsService', () => {
 
       const result = await service.search('user-1', 'nonexistent');
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [], nextCursor: null });
     });
   });
 

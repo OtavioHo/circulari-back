@@ -109,26 +109,34 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /items?search= | Global item search by name |
+| GET | /items?search=&cursor=&limit= | Global item search by name (cursor-paginated) |
 | POST | /items | Create item; optional image upload via multipart/form-data |
 | PATCH | /items/:id | Update item fields; optional image replacement |
 | DELETE | /items/:id | Delete item |
 
 ```json
-// GET /items?search= — response 200
-[
-  {
-    "id": "uuid",
-    "name": "string",
-    "description": "string | null",
-    "quantity": 1,
-    "user_defined_value": "number | null",
-    "category": { "id": "uuid", "name": "string" } | null,
-    "images": [{ "url": "string", "is_main": true }],
-    "list": { "name": "string", "color": "#rrggbb" },
-    "created_at": "timestamp"
-  }
-]
+// GET /items?search=&cursor=&limit= — query params
+// search: string (optional, default "")
+// cursor: uuid (optional) — id of last item from previous page
+// limit:  integer 1–100 (optional, default 15)
+
+// GET /items — response 200
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "description": "string | null",
+      "quantity": 1,
+      "user_defined_value": "number | null",
+      "category": { "id": "uuid", "name": "string" },
+      "images": [{ "url": "string", "is_main": true }],
+      "list": { "name": "string", "color": "#rrggbb" },
+      "created_at": "timestamp"
+    }
+  ],
+  "nextCursor": "uuid | null"
+}
 
 // POST /items — request (multipart/form-data)
 // Text fields:

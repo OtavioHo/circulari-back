@@ -115,13 +115,15 @@ export class ItemsRepository {
     return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
   }
 
-  searchByUser(userId: string, search: string) {
+  searchByUser(userId: string, search: string, cursor?: string, limit: number = 15) {
     return this.prisma.item.findMany({
       where: {
         list: { user_id: userId },
         name: { contains: search, mode: 'insensitive' },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       include: includeImages,
     });
   }
