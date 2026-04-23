@@ -58,7 +58,7 @@ export class ItemsService {
       images,
       list: {
         name: item.list.name,
-        color: item.list.color,
+        color: item.list.color?.hex_code ?? null,
       },
       created_at: item.created_at,
     };
