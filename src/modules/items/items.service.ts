@@ -150,9 +150,16 @@ export class ItemsService {
     return this.repository.findAllCategories();
   }
 
-  async search(userId: string, query: string) {
-    const items = await this.repository.searchByUser(userId, query);
-    return Promise.all(items.map((item) => this.mapItem(item)));
+  async search(userId: string, query: string, cursor?: string, limit: number = 15) {
+    const rows = await this.repository.searchByUser(userId, query, cursor, limit);
+    const hasNextPage = rows.length > limit;
+    const items = hasNextPage ? rows.slice(0, limit) : rows;
+    const nextCursor = hasNextPage ? items[items.length - 1].id : null;
+
+    return {
+      data: await Promise.all(items.map((item) => this.mapItem(item))),
+      nextCursor,
+    };
   }
 
   async getByList(listId: string, userId: string, cursor?: string, limit: number = 20) {

@@ -420,7 +420,7 @@
       "name": "Items",
       "item": [
         {
-          "name": "GET /items?search=",
+          "name": "GET /items",
           "request": {
             "method": "GET",
             "header": [
@@ -430,7 +430,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/items?search=lamp",
+              "raw": "{{baseUrl}}/items?search=lamp&cursor=&limit=15",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -441,6 +441,17 @@
                 {
                   "key": "search",
                   "value": "lamp"
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true,
+                  "description": "UUID of last item from previous page"
+                },
+                {
+                  "key": "limit",
+                  "value": "15",
+                  "description": "Items per page (1-100, default 15)"
                 }
               ]
             }
