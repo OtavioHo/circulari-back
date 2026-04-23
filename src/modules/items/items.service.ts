@@ -56,6 +56,10 @@ export class ItemsService {
       user_defined_value: item.user_defined_value != null ? Number(item.user_defined_value) : null,
       category: item.category ?? null,
       images,
+      list: {
+        name: item.list.name,
+        color: item.list.color?.hex_code ?? null,
+      },
       created_at: item.created_at,
     };
   }

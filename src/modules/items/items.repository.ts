@@ -6,7 +6,7 @@ import { Prisma } from '../../generated/prisma/client';
 
 type ImagePayload = { url: string; storageKey: string; isMain: boolean };
 
-const includeImages = { category: true, images: true } as const;
+const includeImages = { category: true, images: true, list: { include: { color: true } } } as const;
 
 @Injectable()
 export class ItemsRepository {
