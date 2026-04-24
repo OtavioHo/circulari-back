@@ -28,7 +28,7 @@ hero:
 | Items CRUD | <Badge type="tip" text="Implemented" /> |
 | Image upload + storage | <Badge type="tip" text="Implemented" /> |
 | AI image analysis | <Badge type="tip" text="Implemented" /> |
-| Dashboard + search | <Badge type="warning" text="In Progress" /> |
+| Dashboard + search | <Badge type="tip" text="Implemented" /> |
 | Monetization tiers | <Badge type="tip" text="Implemented" /> |
 
 ## Cost Estimates by MAU Tier

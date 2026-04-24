@@ -122,6 +122,7 @@ model Item {
   images   ItemImage[]
 
   @@index([list_id])
+  @@index([name])
   @@map("items")
 }
 

@@ -9,6 +9,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { AiModule } from './modules/ai/ai.module';
 import { TiersModule } from './modules/tiers/tiers.module';
 import { RevenueCatModule } from './modules/revenuecat/revenuecat.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RevenueCatModule } from './modules/revenuecat/revenuecat.module';
     StorageModule,
     AiModule,
     RevenueCatModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
