@@ -227,6 +227,24 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ---
 
+## Dashboard <Badge type="tip" text="Implemented" />
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /dashboard | Summary stats for the authenticated user |
+
+```json
+// GET /dashboard — response 200
+{
+  "list_count": 2,
+  "item_count": 3,
+  "total_value": 300
+}
+// total_value: sum of user_defined_value across all items; nulls treated as 0
+```
+
+---
+
 ## Monetization <Badge type="tip" text="Implemented" />
 
 Two tiers: **free** (default on registration) and **premium** (granted by a valid RevenueCat subscription).
