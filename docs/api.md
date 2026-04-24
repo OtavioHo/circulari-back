@@ -245,6 +245,25 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 ---
 
+## Plan Usage <Badge type="tip" text="Implemented" />
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /plan | Current user's plan name and usage stats |
+
+```json
+// GET /plan — response 200
+{
+  "plan": "free",
+  "lists": { "used": 2, "max": 3 },
+  "items": { "used": 30, "max": 50 },
+  "aiCalls": { "used": 5, "max": 10 }
+}
+// For premium users, max is null (unlimited) for all fields
+```
+
+---
+
 ## Monetization <Badge type="tip" text="Implemented" />
 
 Two tiers: **free** (default on registration) and **premium** (granted by a valid RevenueCat subscription).

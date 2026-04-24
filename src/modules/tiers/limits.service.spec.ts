@@ -43,6 +43,7 @@ describe('LimitsService', () => {
             countItemsByUser: jest.fn(),
             reserveAiCall: jest.fn(),
             releaseAiReservation: jest.fn(),
+            getUserUsage: jest.fn(),
           },
         },
         {
@@ -239,6 +240,52 @@ describe('LimitsService', () => {
       await service.assertCanCreateItem('user-1');
 
       expect(repository.countItemsByUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPlanUsage', () => {
+    it('returns shaped usage for a free user with data', async () => {
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
+      repository.getUserUsage.mockResolvedValue({ listCount: 2, itemCount: 30, aiCallCount: 5 });
+
+      const result = await service.getPlanUsage('user-1');
+
+      expect(result).toEqual({
+        plan: 'free',
+        lists: { used: 2, max: 3 },
+        items: { used: 30, max: 50 },
+        aiCalls: { used: 5, max: 10 },
+      });
+    });
+
+    it('returns null max for all fields on premium tier', async () => {
+      repository.getUserTier.mockResolvedValue('premium');
+      tierConfig.get.mockReturnValue({
+        maxLists: Infinity,
+        maxItems: Infinity,
+        maxAiCallsPerMonth: Infinity,
+      });
+      repository.getUserUsage.mockResolvedValue({ listCount: 10, itemCount: 200, aiCallCount: 50 });
+
+      const result = await service.getPlanUsage('user-1');
+
+      expect(result).toEqual({
+        plan: 'premium',
+        lists: { used: 10, max: null },
+        items: { used: 200, max: null },
+        aiCalls: { used: 50, max: null },
+      });
+    });
+
+    it('returns zero AI call count when user has no ai_usages row', async () => {
+      repository.getUserTier.mockResolvedValue('free');
+      tierConfig.get.mockReturnValue({ maxLists: 3, maxItems: 50, maxAiCallsPerMonth: 10 });
+      repository.getUserUsage.mockResolvedValue({ listCount: 0, itemCount: 0, aiCallCount: 0 });
+
+      const result = await service.getPlanUsage('user-1');
+
+      expect(result.aiCalls).toEqual({ used: 0, max: 10 });
     });
   });
 });
