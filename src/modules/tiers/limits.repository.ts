@@ -25,7 +25,10 @@ export class LimitsRepository {
     const [listCount, itemCount, aiUsage] = await Promise.all([
       this.prisma.list.count({ where: { user_id: userId } }),
       this.prisma.item.count({ where: { list: { user_id: userId } } }),
-      this.prisma.aiUsage.findUnique({ where: { user_id_month: { user_id: userId, month } } }),
+      this.prisma.aiUsage.findUnique({
+        where: { user_id_month: { user_id: userId, month } },
+        select: { call_count: true },
+      }),
     ]);
     return { listCount, itemCount, aiCallCount: aiUsage?.call_count ?? 0 };
   }
