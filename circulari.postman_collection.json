@@ -757,6 +757,28 @@
           }
         }
       ]
+    },
+    {
+      "name": "Email",
+      "item": [
+        {
+          "name": "GET /email/sent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/email/sent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "email",
+                "sent"
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
