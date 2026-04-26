@@ -21,6 +21,18 @@ export class LimitsRepository {
     return this.prisma.item.count({ where: { list: { user_id: userId } } });
   }
 
+  async getUserUsage(userId: string, month: string) {
+    const [listCount, itemCount, aiUsage] = await Promise.all([
+      this.prisma.list.count({ where: { user_id: userId } }),
+      this.prisma.item.count({ where: { list: { user_id: userId } } }),
+      this.prisma.aiUsage.findUnique({
+        where: { user_id_month: { user_id: userId, month } },
+        select: { call_count: true },
+      }),
+    ]);
+    return { listCount, itemCount, aiCallCount: aiUsage?.call_count ?? 0 };
+  }
+
   async reserveAiCall(userId: string, month: string, max: number): Promise<boolean> {
     const id = randomUUID();
     const affected = await this.prisma.$executeRaw`

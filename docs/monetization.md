@@ -190,6 +190,16 @@ psql $DATABASE_URL -c "
 "
 ```
 
+### Verify plan usage via API
+
+```bash
+curl http://localhost:3000/api/v1/plan \
+  -H "Authorization: Bearer <JWT>"
+# → 200 { "plan": "free", "lists": { "used": 1, "max": 3 }, "items": { "used": 5, "max": 50 }, "aiCalls": { "used": 2, "max": 10 } }
+```
+
+After upgrading to premium via webhook, `max` values become `null` for all fields.
+
 ### Test a wrong webhook secret
 
 ```bash

@@ -95,6 +95,21 @@ export class LimitsService {
     await this.repository.releaseAiReservation(userId, currentMonth());
   }
 
+  async getPlanUsage(userId: string) {
+    const tier = await this.repository.getUserTier(userId);
+    const { maxLists, maxItems, maxAiCallsPerMonth } = this.config.get(tier);
+    const { listCount, itemCount, aiCallCount } = await this.repository.getUserUsage(
+      userId,
+      currentMonth(),
+    );
+    return {
+      plan: tier,
+      lists: { used: listCount, max: isFinite(maxLists) ? maxLists : null },
+      items: { used: itemCount, max: isFinite(maxItems) ? maxItems : null },
+      aiCalls: { used: aiCallCount, max: isFinite(maxAiCallsPerMonth) ? maxAiCallsPerMonth : null },
+    };
+  }
+
   private async tierInTx(tx: Prisma.TransactionClient, userId: string): Promise<string> {
     const user = await tx.user.findUnique({ where: { id: userId }, select: { tier: true } });
     return user?.tier ?? 'free';
