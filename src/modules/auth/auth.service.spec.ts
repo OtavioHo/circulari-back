@@ -285,12 +285,12 @@ describe('AuthService', () => {
       expect(emailService.sendEmail).not.toHaveBeenCalled();
     });
 
-    it('should propagate email send errors so the client can retry', async () => {
+    it('should swallow email send errors and still resolve (prevents account enumeration)', async () => {
       repository.findByEmailWithResetFields.mockResolvedValue(baseResetUser);
       repository.storeOtp.mockResolvedValue(true as any);
       emailService.sendEmail.mockRejectedValue(new Error('SMTP failure'));
 
-      await expect(service.forgotPassword(email)).rejects.toThrow('SMTP failure');
+      await expect(service.forgotPassword(email)).resolves.toBeUndefined();
     });
   });
 

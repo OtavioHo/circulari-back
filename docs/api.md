@@ -40,11 +40,12 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 // POST /auth/logout — response 200 (requires Authorization header)
 { "message": "Logged out" }
 
-// POST /auth/forgot-password — request (always returns 200, even if email not found)
+// POST /auth/forgot-password — request (always returns 200: email not found, rate-limited, or email send failure are all silent)
 { "email": "string" }
 
 // POST /auth/forgot-password — response 200
 { "message": "If that email exists, a reset code has been sent." }
+// Rate limit: a new OTP cannot be sent while a previous one has more than 1 minute of TTL remaining (enforced atomically). Always 200.
 
 // POST /auth/verify-reset-otp — request
 { "email": "string", "otp": "string (6-digit numeric)" }

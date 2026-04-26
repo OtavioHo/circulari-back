@@ -145,7 +145,6 @@ export class AuthService {
         `Failed to send password reset email for user ${user.id}`,
         error instanceof Error ? error.stack : undefined,
       );
-      throw error;
     }
   }
 
