@@ -36,5 +36,6 @@ No layer skipping. Controllers handle HTTP, Services hold business logic, Reposi
 | Single-tenant MVP | No collaboration; each user has fully isolated data |
 | Synchronous AI | Item creation waits for OpenAI — simpler flow, accepted latency tradeoff |
 | Storage abstraction | S3-compatible interface allows swapping AWS S3 ↔ Cloudflare R2 without code changes |
+| Email abstraction | `IEmailService` interface + factory pattern; swap `stalwart` ↔ `mock` via `EMAIL_PROVIDER` env var |
 | JWT stateless auth | No server-side sessions; scales horizontally |
 | Social login (Google + Apple) | Required for App Store / Play Store approval |
