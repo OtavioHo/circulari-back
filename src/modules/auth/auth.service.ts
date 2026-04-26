@@ -1,8 +1,6 @@
 import {
   ConflictException,
   ForbiddenException,
-  HttpException,
-  HttpStatus,
   Inject,
   Injectable,
   Logger,
@@ -11,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomInt, randomUUID } from 'crypto';
 import type { StringValue } from 'ms';
 import { Prisma } from '../../generated/prisma/client';
 import { AuthRepository } from './auth.repository';
@@ -117,29 +116,27 @@ export class AuthService {
     if (!user) return;
 
     const now = new Date();
-    const rateLimitThreshold = new Date(now.getTime() + 9 * 60 * 1000);
-    if (
-      user.password_reset_otp_expires_at &&
-      user.password_reset_otp_expires_at > rateLimitThreshold
-    ) {
-      throw new HttpException(
-        'Too many requests. Please wait before requesting a new code.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const rateLimitCutoff = new Date(now.getTime() + 9 * 60 * 1000);
+    const otp = randomInt(100000, 1000000).toString();
     const otpHash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-    await this.repository.storeOtp(user.id, otpHash, expiresAt);
+    const stored = await this.repository.storeOtp(user.id, otpHash, expiresAt, rateLimitCutoff);
+    if (!stored) return;
 
-    await this.emailService.sendEmail({
-      to: email,
-      subject: 'Your password reset code',
-      html: `<p>Your password reset code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
-      text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes.`,
-    });
+    try {
+      await this.emailService.sendEmail({
+        to: email,
+        subject: 'Your password reset code',
+        html: `<p>Your password reset code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
+        text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes.`,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send password reset email for user ${user.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 
   async verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
@@ -158,11 +155,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired code');
     }
 
-    const resetToken = crypto.randomUUID();
+    const resetToken = randomUUID();
     const tokenHash = await bcrypt.hash(resetToken, 10);
     const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-    await this.repository.clearOtpStoreResetToken(user.id, tokenHash, expiresAt);
+    const consumed = await this.repository.clearOtpStoreResetToken(
+      user.id,
+      user.password_reset_otp_hash,
+      tokenHash,
+      expiresAt,
+    );
+    if (!consumed) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
 
     return { resetToken };
   }
@@ -184,7 +189,14 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await this.repository.updatePasswordAndClearReset(user.id, passwordHash);
+    const updated = await this.repository.updatePasswordAndClearReset(
+      user.id,
+      user.password_reset_token_hash,
+      passwordHash,
+    );
+    if (!updated) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
   }
 
   private async signTokens(userId: string, email: string) {

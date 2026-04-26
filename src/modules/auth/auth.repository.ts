@@ -39,9 +39,20 @@ export class AuthRepository {
     });
   }
 
-  async storeOtp(userId: string, otpHash: string, expiresAt: Date) {
-    return this.prisma.user.update({
-      where: { id: userId },
+  async storeOtp(
+    userId: string,
+    otpHash: string,
+    expiresAt: Date,
+    rateLimitCutoff: Date,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        OR: [
+          { password_reset_otp_expires_at: null },
+          { password_reset_otp_expires_at: { lte: rateLimitCutoff } },
+        ],
+      },
       data: {
         password_reset_otp_hash: otpHash,
         password_reset_otp_expires_at: expiresAt,
@@ -49,11 +60,17 @@ export class AuthRepository {
         password_reset_token_expires_at: null,
       },
     });
+    return result.count === 1;
   }
 
-  async clearOtpStoreResetToken(userId: string, tokenHash: string, expiresAt: Date) {
-    return this.prisma.user.update({
-      where: { id: userId },
+  async clearOtpStoreResetToken(
+    userId: string,
+    currentOtpHash: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, password_reset_otp_hash: currentOtpHash },
       data: {
         password_reset_otp_hash: null,
         password_reset_otp_expires_at: null,
@@ -61,11 +78,16 @@ export class AuthRepository {
         password_reset_token_expires_at: expiresAt,
       },
     });
+    return result.count === 1;
   }
 
-  async updatePasswordAndClearReset(userId: string, passwordHash: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
+  async updatePasswordAndClearReset(
+    userId: string,
+    currentTokenHash: string,
+    passwordHash: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, password_reset_token_hash: currentTokenHash },
       data: {
         password_hash: passwordHash,
         password_reset_otp_hash: null,
@@ -74,6 +96,7 @@ export class AuthRepository {
         password_reset_token_expires_at: null,
       },
     });
+    return result.count === 1;
   }
 
   /**

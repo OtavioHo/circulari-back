@@ -1,13 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  ConflictException,
-  ForbiddenException,
-  HttpException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { RevenueCatService } from '../revenuecat/revenuecat.service';
@@ -263,7 +259,7 @@ describe('AuthService', () => {
 
     it('should store OTP hash and send email when user exists', async () => {
       repository.findByEmailWithResetFields.mockResolvedValue(baseResetUser);
-      repository.storeOtp.mockResolvedValue(undefined as any);
+      repository.storeOtp.mockResolvedValue(true as any);
 
       await service.forgotPassword(email);
 
@@ -271,19 +267,22 @@ describe('AuthService', () => {
         'uuid-1',
         expect.any(String),
         expect.any(Date),
+        expect.any(Date),
       );
       expect(emailService.sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: email }));
     });
 
-    it('should throw TooManyRequestsException when called twice within 1 minute', async () => {
+    it('should silently return when called too soon after a previous request', async () => {
       const futureExpiry = new Date(Date.now() + 9.5 * 60 * 1000);
       repository.findByEmailWithResetFields.mockResolvedValue({
         ...baseResetUser,
         password_reset_otp_hash: 'some-hash',
         password_reset_otp_expires_at: futureExpiry,
       });
+      repository.storeOtp.mockResolvedValue(false as any);
 
-      await expect(service.forgotPassword(email)).rejects.toThrow(HttpException);
+      await expect(service.forgotPassword(email)).resolves.toBeUndefined();
+      expect(emailService.sendEmail).not.toHaveBeenCalled();
     });
   });
 
@@ -301,7 +300,7 @@ describe('AuthService', () => {
         password_reset_token_hash: null,
         password_reset_token_expires_at: null,
       });
-      repository.clearOtpStoreResetToken.mockResolvedValue(undefined as any);
+      repository.clearOtpStoreResetToken.mockResolvedValue(true as any);
 
       const result = await service.verifyResetOtp(email, otp);
 
@@ -351,7 +350,7 @@ describe('AuthService', () => {
     const email = 'test@example.com';
 
     it('should update password and clear reset fields for valid token', async () => {
-      const token = crypto.randomUUID();
+      const token = randomUUID();
       const tokenHash = await bcrypt.hash(token, 10);
       repository.findByEmailWithResetFields.mockResolvedValue({
         id: 'uuid-1',
@@ -361,12 +360,13 @@ describe('AuthService', () => {
         password_reset_token_hash: tokenHash,
         password_reset_token_expires_at: new Date(Date.now() + 5 * 60 * 1000),
       });
-      repository.updatePasswordAndClearReset.mockResolvedValue(undefined as any);
+      repository.updatePasswordAndClearReset.mockResolvedValue(true as any);
 
       await service.resetPassword(email, token, 'NewPass1!');
 
       expect(repository.updatePasswordAndClearReset).toHaveBeenCalledWith(
         'uuid-1',
+        expect.any(String),
         expect.any(String),
       );
     });
@@ -382,13 +382,13 @@ describe('AuthService', () => {
         password_reset_token_expires_at: new Date(Date.now() + 5 * 60 * 1000),
       });
 
-      await expect(service.resetPassword(email, crypto.randomUUID(), 'NewPass1!')).rejects.toThrow(
+      await expect(service.resetPassword(email, randomUUID(), 'NewPass1!')).rejects.toThrow(
         UnauthorizedException,
       );
     });
 
     it('should throw UnauthorizedException for expired reset token', async () => {
-      const token = crypto.randomUUID();
+      const token = randomUUID();
       const tokenHash = await bcrypt.hash(token, 10);
       repository.findByEmailWithResetFields.mockResolvedValue({
         id: 'uuid-1',
@@ -407,7 +407,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when user not found', async () => {
       repository.findByEmailWithResetFields.mockResolvedValue(null);
 
-      await expect(service.resetPassword(email, crypto.randomUUID(), 'NewPass1!')).rejects.toThrow(
+      await expect(service.resetPassword(email, randomUUID(), 'NewPass1!')).rejects.toThrow(
         UnauthorizedException,
       );
     });
