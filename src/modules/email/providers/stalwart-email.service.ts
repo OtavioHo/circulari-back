@@ -10,7 +10,7 @@ export class StalwartEmailService implements IEmailService {
     this.from = config.getOrThrow<string>('EMAIL_FROM');
     this.transporter = nodemailer.createTransport({
       host: config.getOrThrow<string>('STALWART_SMTP_HOST'),
-      port: config.getOrThrow<number>('STALWART_SMTP_PORT'),
+      port: parseInt(config.getOrThrow<string>('STALWART_SMTP_PORT'), 10),
       auth: {
         user: config.getOrThrow<string>('STALWART_SMTP_USER'),
         pass: config.getOrThrow<string>('STALWART_SMTP_PASS'),

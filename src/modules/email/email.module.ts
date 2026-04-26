@@ -5,8 +5,11 @@ import { StalwartEmailService } from './providers/stalwart-email.service';
 import { MockEmailService } from './providers/mock-email.service';
 import { EmailController } from './email.controller';
 
+const shouldRegisterEmailController =
+  process.env.EMAIL_PROVIDER === 'mock' && process.env.NODE_ENV !== 'production';
+
 @Module({
-  controllers: [EmailController],
+  controllers: shouldRegisterEmailController ? [EmailController] : [],
   providers: [
     {
       provide: EMAIL_SERVICE,

@@ -45,7 +45,7 @@ Recommended: `docker-compose.yml` with services for `api`, `postgres`, `nginx`.
 | `EMAIL_PROVIDER` | Email transport: `stalwart` or `mock` |
 | `EMAIL_FROM` | Sender address (e.g. `no-reply@example.com`) |
 | `STALWART_SMTP_HOST` | SMTP hostname for Stalwart provider |
-| `STALWART_SMTP_PORT` | SMTP port (default `587`) |
+| `STALWART_SMTP_PORT` | SMTP port (typically `587`; required for Stalwart provider) |
 | `STALWART_SMTP_USER` | SMTP username |
 | `STALWART_SMTP_PASS` | SMTP password |
 

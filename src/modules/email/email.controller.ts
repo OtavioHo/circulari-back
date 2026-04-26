@@ -1,18 +1,30 @@
+import { ConfigService } from '@nestjs/config';
 import { Controller, ForbiddenException, Get, Inject } from '@nestjs/common';
 import { EMAIL_SERVICE } from './email.constants';
 import { MockEmailService } from './providers/mock-email.service';
-import { Public } from '../auth/decorators/public.decorator';
 
-@Public()
 @Controller('email')
 export class EmailController {
-  constructor(@Inject(EMAIL_SERVICE) private readonly emailService: unknown) {}
+  constructor(
+    @Inject(EMAIL_SERVICE) private readonly emailService: unknown,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('sent')
   getSentEmails() {
-    if (process.env.NODE_ENV === 'production') {
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const emailProvider = this.configService.get<string>('EMAIL_PROVIDER');
+
+    if (nodeEnv === 'production' || emailProvider !== 'mock') {
       throw new ForbiddenException();
     }
-    return (this.emailService as MockEmailService).getSentEmails();
+
+    if (!(this.emailService instanceof MockEmailService)) {
+      throw new ForbiddenException(
+        'Sent email inspection is only available with the mock email provider.',
+      );
+    }
+
+    return this.emailService.getSentEmails();
   }
 }

@@ -12,7 +12,7 @@ export class MockEmailService implements IEmailService {
   }
 
   getSentEmails(): SentEmail[] {
-    return this.sentEmails;
+    return [...this.sentEmails];
   }
 
   clearSentEmails(): void {
