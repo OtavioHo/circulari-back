@@ -3,17 +3,21 @@ import { ConflictException, ForbiddenException, UnauthorizedException } from '@n
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { RevenueCatService } from '../revenuecat/revenuecat.service';
+import { EMAIL_SERVICE } from '../email/email.constants';
 
 describe('AuthService', () => {
   let service: AuthService;
   let repository: jest.Mocked<AuthRepository>;
   let revenueCat: { reconcileUser: jest.Mock };
+  let emailService: { sendEmail: jest.Mock };
 
   beforeEach(async () => {
     revenueCat = { reconcileUser: jest.fn().mockResolvedValue(undefined) };
+    emailService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,7 +30,15 @@ describe('AuthService', () => {
             create: jest.fn(),
             updateRefreshTokenHash: jest.fn(),
             verifyAndRotateRefreshToken: jest.fn(),
+            findByEmailWithResetFields: jest.fn(),
+            storeOtp: jest.fn(),
+            clearOtpStoreResetToken: jest.fn(),
+            updatePasswordAndClearReset: jest.fn(),
           },
+        },
+        {
+          provide: EMAIL_SERVICE,
+          useValue: emailService,
         },
         {
           provide: RevenueCatService,
@@ -83,6 +95,10 @@ describe('AuthService', () => {
         refresh_token_hash: null,
         tier: 'free',
         created_at: new Date(),
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
       });
       repository.updateRefreshTokenHash.mockResolvedValue(undefined as any);
 
@@ -107,7 +123,7 @@ describe('AuthService', () => {
         refresh_token_hash: null,
         tier: 'free',
         created_at: new Date(),
-      });
+      } as any);
 
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
     });
@@ -152,7 +168,7 @@ describe('AuthService', () => {
         refresh_token_hash: null,
         tier: 'free',
         created_at: new Date(),
-      });
+      } as any);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
     });
@@ -176,7 +192,7 @@ describe('AuthService', () => {
       refresh_token_hash: 'some-hash',
       tier: 'free',
       created_at: new Date(),
-    };
+    } as any;
 
     it('should rotate tokens for valid refresh token', async () => {
       repository.findById.mockResolvedValue(baseUser);
@@ -220,6 +236,188 @@ describe('AuthService', () => {
       await service.logout('uuid-1');
 
       expect(repository.updateRefreshTokenHash).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    const email = 'test@example.com';
+    const baseResetUser = {
+      id: 'uuid-1',
+      email,
+      password_reset_otp_hash: null,
+      password_reset_otp_expires_at: null,
+      password_reset_token_hash: null,
+      password_reset_token_expires_at: null,
+    };
+
+    it('should silently return when user not found', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(null);
+
+      await expect(service.forgotPassword(email)).resolves.toBeUndefined();
+      expect(emailService.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('should store OTP hash and send email when user exists', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(baseResetUser);
+      repository.storeOtp.mockResolvedValue(true as any);
+
+      await service.forgotPassword(email);
+
+      expect(repository.storeOtp).toHaveBeenCalledWith(
+        'uuid-1',
+        expect.any(String),
+        expect.any(Date),
+        expect.any(Date),
+      );
+      expect(emailService.sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: email }));
+    });
+
+    it('should silently return when called too soon after a previous request', async () => {
+      const futureExpiry = new Date(Date.now() + 9.5 * 60 * 1000);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        ...baseResetUser,
+        password_reset_otp_hash: 'some-hash',
+        password_reset_otp_expires_at: futureExpiry,
+      });
+
+      await expect(service.forgotPassword(email)).resolves.toBeUndefined();
+      expect(repository.storeOtp).not.toHaveBeenCalled();
+      expect(emailService.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('should swallow email send errors and still resolve (prevents account enumeration)', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(baseResetUser);
+      repository.storeOtp.mockResolvedValue(true as any);
+      emailService.sendEmail.mockRejectedValue(new Error('SMTP failure'));
+
+      await expect(service.forgotPassword(email)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('verifyResetOtp', () => {
+    const email = 'test@example.com';
+
+    it('should return reset token when OTP is correct and not expired', async () => {
+      const otp = '123456';
+      const otpHash = await bcrypt.hash(otp, 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: otpHash,
+        password_reset_otp_expires_at: new Date(Date.now() + 5 * 60 * 1000),
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      });
+      repository.clearOtpStoreResetToken.mockResolvedValue(true as any);
+
+      const result = await service.verifyResetOtp(email, otp);
+
+      expect(result.resetToken).toBeDefined();
+      expect(result.resetToken).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+    });
+
+    it('should throw UnauthorizedException for wrong OTP', async () => {
+      const otpHash = await bcrypt.hash('999999', 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: otpHash,
+        password_reset_otp_expires_at: new Date(Date.now() + 5 * 60 * 1000),
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      });
+
+      await expect(service.verifyResetOtp(email, '000000')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for expired OTP', async () => {
+      const otp = '123456';
+      const otpHash = await bcrypt.hash(otp, 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: otpHash,
+        password_reset_otp_expires_at: new Date(Date.now() - 1000),
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      });
+
+      await expect(service.verifyResetOtp(email, otp)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException when user not found', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(null);
+
+      await expect(service.verifyResetOtp(email, '123456')).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('resetPassword', () => {
+    const email = 'test@example.com';
+
+    it('should update password and clear reset fields for valid token', async () => {
+      const token = randomUUID();
+      const tokenHash = await bcrypt.hash(token, 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      repository.updatePasswordAndClearReset.mockResolvedValue(true as any);
+
+      await service.resetPassword(email, token, 'NewPass1!');
+
+      expect(repository.updatePasswordAndClearReset).toHaveBeenCalledWith(
+        'uuid-1',
+        expect.any(String),
+        expect.any(String),
+      );
+    });
+
+    it('should throw UnauthorizedException for invalid reset token', async () => {
+      const tokenHash = await bcrypt.hash('correct-token', 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: new Date(Date.now() + 5 * 60 * 1000),
+      });
+
+      await expect(service.resetPassword(email, randomUUID(), 'NewPass1!')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException for expired reset token', async () => {
+      const token = randomUUID();
+      const tokenHash = await bcrypt.hash(token, 10);
+      repository.findByEmailWithResetFields.mockResolvedValue({
+        id: 'uuid-1',
+        email,
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: new Date(Date.now() - 1000),
+      });
+
+      await expect(service.resetPassword(email, token, 'NewPass1!')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when user not found', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(null);
+
+      await expect(service.resetPassword(email, randomUUID(), 'NewPass1!')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

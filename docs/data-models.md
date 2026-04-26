@@ -13,6 +13,10 @@
 | oauth_id | string | nullable, provider-specific user ID |
 | refresh_token_hash | string | nullable, bcrypt hash of current refresh token |
 | tier | string | `"free"` or `"premium"`; default `"free"`. Updated by RevenueCat webhooks and login reconciliation. |
+| password_reset_otp_hash | string | nullable, bcrypt hash of pending 6-digit OTP |
+| password_reset_otp_expires_at | timestamp | nullable, expiry of the pending OTP (10 min TTL) |
+| password_reset_token_hash | string | nullable, bcrypt hash of the short-lived reset token |
+| password_reset_token_expires_at | timestamp | nullable, expiry of the reset token (10 min TTL) |
 | created_at | timestamp | |
 
 ## ListColor

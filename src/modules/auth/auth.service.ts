@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -8,12 +9,15 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomInt, randomUUID } from 'crypto';
 import type { StringValue } from 'ms';
 import { Prisma } from '../../generated/prisma/client';
 import { AuthRepository } from './auth.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RevenueCatService } from '../revenuecat/revenuecat.service';
+import { EMAIL_SERVICE } from '../email/email.constants';
+import { IEmailService } from '../email/email.interface';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +28,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly revenueCat: RevenueCatService,
+    @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -104,6 +109,103 @@ export class AuthService {
 
   async logout(userId: string) {
     await this.repository.updateRefreshTokenHash(userId, null);
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.repository.findByEmailWithResetFields(email);
+    if (!user) return;
+
+    const now = new Date();
+    const rateLimitCutoff = new Date(now.getTime() + 9 * 60 * 1000);
+
+    // cheap pre-check before the expensive bcrypt hash
+    if (
+      user.password_reset_otp_expires_at &&
+      user.password_reset_otp_expires_at > rateLimitCutoff
+    ) {
+      return;
+    }
+
+    const otp = randomInt(100000, 1000000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+    const stored = await this.repository.storeOtp(user.id, otpHash, expiresAt, rateLimitCutoff);
+    if (!stored) return;
+
+    try {
+      await this.emailService.sendEmail({
+        to: email,
+        subject: 'Your password reset code',
+        html: `<p>Your password reset code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
+        text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes.`,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send password reset email for user ${user.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+  }
+
+  async verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
+    const user = await this.repository.findByEmailWithResetFields(email);
+    if (!user || !user.password_reset_otp_hash) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+
+    const now = new Date();
+    if (!user.password_reset_otp_expires_at || user.password_reset_otp_expires_at < now) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+
+    const valid = await bcrypt.compare(otp, user.password_reset_otp_hash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+
+    const resetToken = randomUUID();
+    const tokenHash = await bcrypt.hash(resetToken, 10);
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+    const consumed = await this.repository.clearOtpStoreResetToken(
+      user.id,
+      user.password_reset_otp_hash,
+      tokenHash,
+      expiresAt,
+    );
+    if (!consumed) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+
+    return { resetToken };
+  }
+
+  async resetPassword(email: string, resetToken: string, newPassword: string): Promise<void> {
+    const user = await this.repository.findByEmailWithResetFields(email);
+    if (!user || !user.password_reset_token_hash) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const now = new Date();
+    if (!user.password_reset_token_expires_at || user.password_reset_token_expires_at < now) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const valid = await bcrypt.compare(resetToken, user.password_reset_token_hash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const updated = await this.repository.updatePasswordAndClearReset(
+      user.id,
+      user.password_reset_token_hash,
+      passwordHash,
+    );
+    if (!updated) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
   }
 
   private async signTokens(userId: string, email: string) {

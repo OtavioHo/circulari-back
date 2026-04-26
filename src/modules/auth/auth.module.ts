@@ -10,9 +10,10 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { RevenueCatModule } from '../revenuecat/revenuecat.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PassportModule, JwtModule.register({}), RevenueCatModule],
+  imports: [PassportModule, JwtModule.register({}), RevenueCatModule, EmailModule],
   controllers: [AuthController],
   providers: [
     AuthService,

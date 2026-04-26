@@ -25,6 +25,79 @@ export class AuthRepository {
     });
   }
 
+  async findByEmailWithResetFields(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password_reset_otp_hash: true,
+        password_reset_otp_expires_at: true,
+        password_reset_token_hash: true,
+        password_reset_token_expires_at: true,
+      },
+    });
+  }
+
+  async storeOtp(
+    userId: string,
+    otpHash: string,
+    expiresAt: Date,
+    rateLimitCutoff: Date,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        OR: [
+          { password_reset_otp_expires_at: null },
+          { password_reset_otp_expires_at: { lte: rateLimitCutoff } },
+        ],
+      },
+      data: {
+        password_reset_otp_hash: otpHash,
+        password_reset_otp_expires_at: expiresAt,
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      },
+    });
+    return result.count === 1;
+  }
+
+  async clearOtpStoreResetToken(
+    userId: string,
+    currentOtpHash: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, password_reset_otp_hash: currentOtpHash },
+      data: {
+        password_reset_otp_hash: null,
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: expiresAt,
+      },
+    });
+    return result.count === 1;
+  }
+
+  async updatePasswordAndClearReset(
+    userId: string,
+    currentTokenHash: string,
+    passwordHash: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, password_reset_token_hash: currentTokenHash },
+      data: {
+        password_hash: passwordHash,
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      },
+    });
+    return result.count === 1;
+  }
+
   /**
    * Atomically verifies the current refresh token hash and, if valid, replaces it
    * with a new hash. Uses SELECT FOR UPDATE to lock the row so concurrent requests
