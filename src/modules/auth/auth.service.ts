@@ -117,6 +117,15 @@ export class AuthService {
 
     const now = new Date();
     const rateLimitCutoff = new Date(now.getTime() + 9 * 60 * 1000);
+
+    // cheap pre-check before the expensive bcrypt hash
+    if (
+      user.password_reset_otp_expires_at &&
+      user.password_reset_otp_expires_at > rateLimitCutoff
+    ) {
+      return;
+    }
+
     const otp = randomInt(100000, 1000000).toString();
     const otpHash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
@@ -136,6 +145,7 @@ export class AuthService {
         `Failed to send password reset email for user ${user.id}`,
         error instanceof Error ? error.stack : undefined,
       );
+      throw error;
     }
   }
 

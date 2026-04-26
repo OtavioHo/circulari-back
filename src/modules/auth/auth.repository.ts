@@ -73,7 +73,6 @@ export class AuthRepository {
       where: { id: userId, password_reset_otp_hash: currentOtpHash },
       data: {
         password_reset_otp_hash: null,
-        password_reset_otp_expires_at: null,
         password_reset_token_hash: tokenHash,
         password_reset_token_expires_at: expiresAt,
       },

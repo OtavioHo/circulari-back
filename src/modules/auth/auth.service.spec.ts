@@ -279,10 +279,18 @@ describe('AuthService', () => {
         password_reset_otp_hash: 'some-hash',
         password_reset_otp_expires_at: futureExpiry,
       });
-      repository.storeOtp.mockResolvedValue(false as any);
 
       await expect(service.forgotPassword(email)).resolves.toBeUndefined();
+      expect(repository.storeOtp).not.toHaveBeenCalled();
       expect(emailService.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('should propagate email send errors so the client can retry', async () => {
+      repository.findByEmailWithResetFields.mockResolvedValue(baseResetUser);
+      repository.storeOtp.mockResolvedValue(true as any);
+      emailService.sendEmail.mockRejectedValue(new Error('SMTP failure'));
+
+      await expect(service.forgotPassword(email)).rejects.toThrow('SMTP failure');
     });
   });
 

@@ -1,4 +1,5 @@
-import { IsEmail, IsString, IsUUID, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsUUID } from 'class-validator';
+import { IsPassword } from './password.validator';
 
 export class ResetPasswordDto {
   @IsEmail()
@@ -7,11 +8,6 @@ export class ResetPasswordDto {
   @IsUUID()
   resetToken: string;
 
-  @IsString()
-  @MinLength(8)
-  @Matches(/[A-Z]/, { message: 'password must contain at least one uppercase letter' })
-  @Matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, {
-    message: 'password must contain at least one special character',
-  })
+  @IsPassword()
   newPassword: string;
 }
