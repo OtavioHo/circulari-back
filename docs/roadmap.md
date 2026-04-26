@@ -6,6 +6,7 @@
 - [x] PostgreSQL connection + migrations
 - [x] `POST /auth/register`
 - [x] `POST /auth/login`
+- [x] Password reset via 6-digit OTP email (`POST /auth/forgot-password`, `POST /auth/verify-reset-otp`, `POST /auth/reset-password`)
 - [ ] `POST /auth/social` (Google + Apple)
 - [x] JWT middleware
 

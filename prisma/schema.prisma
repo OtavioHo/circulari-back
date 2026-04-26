@@ -22,8 +22,12 @@ model User {
   photo_url          String?
   oauth_provider     String?
   oauth_id           String?
-  refresh_token_hash String?
-  tier               String   @default("free")
+  refresh_token_hash               String?
+  tier                             String    @default("free")
+  password_reset_otp_hash          String?
+  password_reset_otp_expires_at    DateTime?
+  password_reset_token_hash        String?
+  password_reset_token_expires_at  DateTime?
   created_at         DateTime @default(now()) @map("created_at")
 
   lists     List[]

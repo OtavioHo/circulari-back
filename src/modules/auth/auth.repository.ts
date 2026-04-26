@@ -25,6 +25,57 @@ export class AuthRepository {
     });
   }
 
+  async findByEmailWithResetFields(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password_reset_otp_hash: true,
+        password_reset_otp_expires_at: true,
+        password_reset_token_hash: true,
+        password_reset_token_expires_at: true,
+      },
+    });
+  }
+
+  async storeOtp(userId: string, otpHash: string, expiresAt: Date) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_reset_otp_hash: otpHash,
+        password_reset_otp_expires_at: expiresAt,
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      },
+    });
+  }
+
+  async clearOtpStoreResetToken(userId: string, tokenHash: string, expiresAt: Date) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: expiresAt,
+      },
+    });
+  }
+
+  async updatePasswordAndClearReset(userId: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: passwordHash,
+        password_reset_otp_hash: null,
+        password_reset_otp_expires_at: null,
+        password_reset_token_hash: null,
+        password_reset_token_expires_at: null,
+      },
+    });
+  }
+
   /**
    * Atomically verifies the current refresh token hash and, if valid, replaces it
    * with a new hash. Uses SELECT FOR UPDATE to lock the row so concurrent requests

@@ -1,7 +1,7 @@
 # API
 
 Base URL: `/api/v1`
-Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/register`, `/auth/login`, `/auth/refresh`, `/health`, and `/webhooks/revenuecat` (secret-authenticated)
+Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/verify-reset-otp`, `/auth/reset-password`, `/health`, and `/webhooks/revenuecat` (secret-authenticated)
 
 ---
 
@@ -13,6 +13,9 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | POST | /auth/login | Returns JWT + refresh token |
 | POST | /auth/refresh | Exchange refresh token for new token pair |
 | POST | /auth/logout | Invalidate refresh token |
+| POST | /auth/forgot-password | Request a 6-digit OTP to reset password |
+| POST | /auth/verify-reset-otp | Verify OTP, receive a short-lived reset token |
+| POST | /auth/reset-password | Reset password using the reset token |
 | POST | /auth/social | Google / Apple OAuth (not yet implemented) |
 
 ```json
@@ -36,6 +39,26 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 // POST /auth/logout — response 200 (requires Authorization header)
 { "message": "Logged out" }
+
+// POST /auth/forgot-password — request (always returns 200, even if email not found)
+{ "email": "string" }
+
+// POST /auth/forgot-password — response 200
+{ "message": "If that email exists, a reset code has been sent." }
+
+// POST /auth/verify-reset-otp — request
+{ "email": "string", "otp": "string (6-digit numeric)" }
+
+// POST /auth/verify-reset-otp — response 200
+{ "resetToken": "uuid" }
+// 401 on wrong/expired OTP
+
+// POST /auth/reset-password — request
+{ "email": "string", "resetToken": "uuid", "newPassword": "string (8+ chars, uppercase, special char)" }
+
+// POST /auth/reset-password — response 200
+{ "message": "Password has been reset successfully." }
+// 401 on invalid/expired reset token
 ```
 
 ---
