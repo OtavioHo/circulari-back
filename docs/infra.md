@@ -42,12 +42,13 @@ Recommended: `docker-compose.yml` with services for `api`, `postgres`, `nginx`.
 | `FREE_MAX_LISTS` | Free-tier cap on total lists per user (default 3) |
 | `FREE_MAX_ITEMS` | Free-tier cap on total items per user (default 50) |
 | `FREE_MAX_AI_CALLS_PER_MONTH` | Free-tier cap on `/ai/analyze` calls per calendar month (default 10) |
-| `EMAIL_PROVIDER` | Email transport: `stalwart` or `mock` |
+| `EMAIL_PROVIDER` | Email transport: `stalwart`, `resend`, or `mock` |
 | `EMAIL_FROM` | Sender address (e.g. `no-reply@example.com`) |
 | `STALWART_SMTP_HOST` | SMTP hostname for Stalwart provider |
 | `STALWART_SMTP_PORT` | SMTP port (typically `587`; required for Stalwart provider) |
 | `STALWART_SMTP_USER` | SMTP username |
 | `STALWART_SMTP_PASS` | SMTP password |
+| `RESEND_API_KEY` | API key for Resend provider (required when `EMAIL_PROVIDER=resend`) |
 
 ## Backup
 
