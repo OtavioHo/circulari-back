@@ -62,6 +62,12 @@ export class AuthService {
     };
   }
 
+  async getMe(userId: string) {
+    const user = await this.repository.findById(userId);
+    if (!user) throw new ForbiddenException('User not found');
+    return { id: user.id, email: user.email, name: user.name };
+  }
+
   async login(dto: LoginDto) {
     const user = await this.repository.findByEmail(dto.email);
     if (!user || !user.password_hash) {
@@ -82,7 +88,11 @@ export class AuthService {
     const tokens = await this.signTokens(user.id, user.email);
     await this.storeRefreshHash(user.id, tokens.refreshToken);
 
-    return tokens;
+    return {
+      token: tokens.token,
+      refreshToken: tokens.refreshToken,
+      user: { id: user.id, email: user.email, name: user.name },
+    };
   }
 
   async refresh(userId: string, refreshToken: string) {
