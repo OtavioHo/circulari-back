@@ -24,14 +24,14 @@ const categories = [
 ];
 
 const listColors = [
-  { hex_code: '#EF4444', name: 'Vermelho', order: 0 },
-  { hex_code: '#F97316', name: 'Laranja', order: 1 },
-  { hex_code: '#EAB308', name: 'Amarelo', order: 2 },
-  { hex_code: '#22C55E', name: 'Verde', order: 3 },
-  { hex_code: '#3B82F6', name: 'Azul', order: 4 },
-  { hex_code: '#A855F7', name: 'Roxo', order: 5 },
-  { hex_code: '#EC4899', name: 'Rosa', order: 6 },
-  { hex_code: '#6B7280', name: 'Cinza', order: 7 },
+  { hex_code: '#F8B3B3', name: 'Vermelho', order: 0 },
+  { hex_code: '#F9D5B8', name: 'Laranja', order: 1 },
+  { hex_code: '#F5E5B8', name: 'Amarelo', order: 2 },
+  { hex_code: '#C8E6C9', name: 'Verde', order: 3 },
+  { hex_code: '#BBDEFB', name: 'Azul', order: 4 },
+  { hex_code: '#E1BEE7', name: 'Roxo', order: 5 },
+  { hex_code: '#F8BBD0', name: 'Rosa', order: 6 },
+  { hex_code: '#D0D0D0', name: 'Cinza', order: 7 },
 ];
 
 const listIcons = [
