@@ -31,6 +31,8 @@ RUN npm ci && npx prisma generate && npm prune --omit=dev && npm cache clean --f
 
 COPY --from=builder /app/dist ./dist
 
+RUN echo '{"type":"commonjs"}' > /app/dist/package.json
+
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
