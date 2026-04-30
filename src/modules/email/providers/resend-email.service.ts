@@ -22,7 +22,7 @@ export class ResendEmailService implements IEmailService {
     });
 
     if (error) {
-      throw new Error(`Resend error: ${error.message}`);
+      throw new Error(`Resend error: ${error.message}`, { cause: error });
     }
   }
 }
