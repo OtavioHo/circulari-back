@@ -4,8 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY prisma/ ./prisma/
+COPY prisma.config.ts ./
 
 RUN npm ci
+RUN npx prisma generate
 
 COPY . .
 
@@ -18,11 +20,11 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY prisma/ ./prisma/
+COPY prisma.config.ts ./
 
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci && npx prisma generate && npm prune --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/generated ./src/generated
 
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
