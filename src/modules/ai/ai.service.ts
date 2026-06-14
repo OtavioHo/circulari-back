@@ -4,17 +4,62 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LimitsService } from '../tiers/limits.service';
 import OpenAI from 'openai';
 
-function buildPrompt(categoryNames: string[]): string {
-  const list = JSON.stringify(categoryNames);
-  return `Analyze the image and return a JSON object with the following fields:
-- name: item name in Portuguese (Brazil)
-- category: pick the single most fitting category from this list, or null if none fit: ${list}
-- description: brief item description in one paragraph, in Portuguese (Brazil)
-- price_min: minimum market value in BRL (number)
-- price_max: maximum market value in BRL (number)
+const SYSTEM_PROMPT = `You are an expert appraiser of second-hand and resale goods for a Brazilian online marketplace.
+From a single photo you identify the main item and estimate its realistic resale value in the Brazilian used-goods market (in BRL).
+Always assess the item's visible condition (new, lightly used, worn, damaged) and let it drive the price.
+Write all user-facing text (name, description) in natural Brazilian Portuguese (pt-BR).
+Base prices on what this specific item, in its visible condition, actually sells for second-hand in Brazil — keep the range tight and realistic, not a wild guess.`;
 
-Return only valid JSON, no explanation:
-{ "name": "", "category": null, "description": "", "price_min": 0, "price_max": 0 }`;
+function buildPrompt(categoryNames: string[]): string {
+  const list =
+    categoryNames.length > 0
+      ? categoryNames.map((c) => `- ${c}`).join('\n')
+      : '(no categories available)';
+  return `Analyze the photo and identify the single main item being sold.
+
+Then provide:
+- name: a concise pt-BR product name (max ~6 words), specific enough to recognize (brand/model if visible).
+- category: choose the single best-fitting category, matching one EXACTLY from the list below; use null only if none reasonably fit.
+- description: one short pt-BR paragraph covering the item's key attributes and its visible condition.
+- price_min / price_max: the realistic SECOND-HAND resale range in BRL for this item in its visible condition. Keep the spread sensible; if uncertain, give your best estimate rather than an extreme range.
+
+Categories:
+${list}
+
+If the photo does not clearly show a sellable item, still return your best guess with conservative (low) prices.`;
+}
+
+// OpenAI Structured Outputs schema — guarantees the response shape so parsing
+// can't drift. The category enum (when categories exist) forces a valid pick.
+function buildSchema(categoryNames: string[]): Record<string, unknown> {
+  const category: Record<string, unknown> = {
+    type: ['string', 'null'],
+    description: 'Exact category name from the provided list, or null if none fit.',
+  };
+  if (categoryNames.length > 0) {
+    category.enum = [...categoryNames, null];
+  }
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['name', 'category', 'description', 'price_min', 'price_max'],
+    properties: {
+      name: { type: 'string', description: 'Concise pt-BR item name, max ~6 words.' },
+      category,
+      description: {
+        type: 'string',
+        description: 'One short pt-BR paragraph: key attributes and visible condition.',
+      },
+      price_min: {
+        type: 'number',
+        description: 'Lower bound of realistic second-hand resale value in BRL.',
+      },
+      price_max: {
+        type: 'number',
+        description: 'Upper bound of realistic second-hand resale value in BRL.',
+      },
+    },
+  };
 }
 
 export interface AnalyzeResult {
@@ -30,6 +75,7 @@ export interface AnalyzeResult {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly openai: OpenAI;
+  private readonly model: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -39,6 +85,7 @@ export class AiService {
     this.openai = new OpenAI({
       apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY'),
     });
+    this.model = this.config.get<string>('OPENAI_VISION_MODEL') ?? 'gpt-4o';
   }
 
   async analyze(userId: string, imageBuffer: Buffer, mimetype: string): Promise<AnalyzeResult> {
@@ -88,18 +135,26 @@ export class AiService {
 
       const response = await this.openai.chat.completions.create(
         {
-          model: 'gpt-4o-mini',
+          model: this.model,
           messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
             {
               role: 'user',
               content: [
                 { type: 'text', text: buildPrompt(categoryNames) },
-                { type: 'image_url', image_url: { url: dataUrl } },
+                { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
               ],
             },
           ],
-          max_tokens: 512,
-          response_format: { type: 'json_object' },
+          max_tokens: 600,
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'item_analysis',
+              strict: true,
+              schema: buildSchema(categoryNames),
+            },
+          },
           temperature: 0,
         },
         { timeout: 30_000 },

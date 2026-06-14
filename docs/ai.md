@@ -2,7 +2,9 @@
 
 ## Model
 
-OpenAI API — GPT-4o-mini (default) or GPT-4o
+OpenAI Vision — **GPT-4o** by default. Configurable via the `OPENAI_VISION_MODEL`
+env var (any vision-capable OpenAI model). Images are sent with `detail: "high"`
+for more reliable item recognition.
 
 ## Flow
 
@@ -25,19 +27,22 @@ AI is a **separate step** before item creation. The client sends the image to `/
 
 ## Prompt
 
-The prompt is built dynamically with the current category list injected at call time:
+A **system prompt** frames the model as an appraiser of second-hand goods for a
+Brazilian marketplace, instructing it to judge visible condition and price the
+item against the realistic used-goods market in BRL.
 
-```
-Analyze the image and return a JSON object with the following fields:
-- name: item name in Portuguese (Brazil)
-- category: pick the single most fitting category from this list, or null if none fit: ["Móveis","Eletrônicos", ...]
-- description: brief item description in one paragraph, in Portuguese (Brazil)
-- price_min: minimum market value in BRL (number)
-- price_max: maximum market value in BRL (number)
+A **user prompt** (built dynamically with the current category list injected at
+call time) asks for the item name, best-matching category (or null), a pt-BR
+description including condition, and a sensible second-hand `price_min`/`price_max`
+range.
 
-Return only valid JSON, no explanation:
-{ "name": "", "category": null, "description": "", "price_min": 0, "price_max": 0 }
-```
+### Structured Outputs
+
+The response shape is enforced with OpenAI **Structured Outputs**
+(`response_format: json_schema`, `strict: true`) rather than free-form JSON, so
+the returned fields can't drift. When categories exist, `category` is constrained
+to an `enum` of the valid names (plus `null`), pushing the model to pick a real
+category. Fields: `name`, `category`, `description`, `price_min`, `price_max`.
 
 ## Category Matching
 
