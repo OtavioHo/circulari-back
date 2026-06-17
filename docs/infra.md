@@ -1,21 +1,20 @@
-# Infrastructure <Badge type="danger" text="Not Implemented" />
+# Infrastructure <Badge type="tip" text="Implemented" />
 
-## MVP Setup
+## Production setup
 
-Single VPS running:
-- Node.js API (NestJS)
-- PostgreSQL
-- Nginx (reverse proxy)
+The backend runs on **Google Cloud Platform** (region `southamerica-east1` / São Paulo):
 
-Images stored externally on S3 / Cloudflare R2.
+- **Cloud Run** — the NestJS API (serverless, scale-to-zero)
+- **Cloud SQL** — PostgreSQL 16 (`db-f1-micro`)
+- **Cloud Storage** — images, via the S3-compatible HMAC API
+- **Secret Manager** — all secrets
+- **Artifact Registry** — container images
 
-## Deploy
+> 📖 For the full deploy/redeploy runbook and how to change any configuration or value, see **[Deployment](./deployment)**.
 
-```
-Docker (API + Postgres) + Nginx
-```
+## Local development
 
-Recommended: `docker-compose.yml` with services for `api`, `postgres`, `nginx`.
+`docker-compose.yml` runs Postgres + MinIO locally for development (see repo root). The app itself runs with `npm run start:dev`.
 
 ## Environment Variables
 

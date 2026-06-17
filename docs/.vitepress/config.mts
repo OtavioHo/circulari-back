@@ -15,6 +15,7 @@ export default defineConfig({
       { text: 'API', link: '/api' },
       { text: 'AI Integration', link: '/ai' },
       { text: 'Infrastructure', link: '/infra' },
+      { text: 'Deployment', link: '/deployment' },
       { text: 'Infrastructure Costs', link: '/infrastructure-costs' },
       { text: 'Monetization', link: '/monetization' },
       { text: 'Roadmap', link: '/roadmap' }

@@ -15,7 +15,8 @@ hero:
 | [Data Models](./data-models) | DB schema and field definitions |
 | [API](./api) | Endpoints, request/response shapes |
 | [AI Integration](./ai) | OpenAI flow, prompt format, price normalization |
-| [Infrastructure](./infra) | Deploy, environment variables, Docker |
+| [Infrastructure](./infra) | Stack overview, environment variables |
+| [Deployment](./deployment) | GCP Cloud Run runbook: deploy, redeploy, change config/secrets |
 | [Roadmap](./roadmap) | Milestones and implementation status |
 | [Monetization](./monetization) | Tier limits, RevenueCat setup, app store configuration |
 
