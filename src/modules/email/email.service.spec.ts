@@ -1,6 +1,14 @@
 import { ConfigService } from '@nestjs/config';
 import { StalwartEmailService } from './providers/stalwart-email.service';
 import { MockEmailService } from './providers/mock-email.service';
+import { ResendEmailService } from './providers/resend-email.service';
+
+const mockResendSend = jest.fn();
+jest.mock('resend', () => ({
+  Resend: jest.fn().mockImplementation(() => ({
+    emails: { send: mockResendSend },
+  })),
+}));
 
 jest.mock('nodemailer', () => {
   const mockSendMail = jest.fn().mockResolvedValue({});
@@ -65,6 +73,59 @@ describe('StalwartEmailService', () => {
 
   it('throws on missing required config', () => {
     expect(() => new StalwartEmailService(mockConfig({}))).toThrow();
+  });
+});
+
+describe('ResendEmailService', () => {
+  const baseConfig = {
+    EMAIL_FROM: 'no-reply@example.com',
+    RESEND_API_KEY: 're_test_key',
+  };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('calls resend.emails.send with correct params', async () => {
+    mockResendSend.mockResolvedValue({ data: { id: 'msg_123' }, error: null });
+    const service = new ResendEmailService(mockConfig(baseConfig));
+
+    await service.sendEmail({ to: 'user@test.com', subject: 'Hello', html: '<p>Hi</p>' });
+
+    expect(mockResendSend).toHaveBeenCalledWith({
+      from: 'no-reply@example.com',
+      to: 'user@test.com',
+      subject: 'Hello',
+      html: '<p>Hi</p>',
+      text: undefined,
+    });
+  });
+
+  it('includes text when provided', async () => {
+    mockResendSend.mockResolvedValue({ data: { id: 'msg_123' }, error: null });
+    const service = new ResendEmailService(mockConfig(baseConfig));
+
+    await service.sendEmail({
+      to: 'user@test.com',
+      subject: 'Hello',
+      html: '<p>Hi</p>',
+      text: 'Hi',
+    });
+
+    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ text: 'Hi' }));
+  });
+
+  it('throws when resend returns an error', async () => {
+    mockResendSend.mockResolvedValue({ data: null, error: { message: 'Invalid API key' } });
+    const service = new ResendEmailService(mockConfig(baseConfig));
+
+    await expect(
+      service.sendEmail({ to: 'user@test.com', subject: 'Hello', html: '<p>Hi</p>' }),
+    ).rejects.toThrow('Resend error: Invalid API key');
+  });
+
+  it('throws on missing RESEND_API_KEY', () => {
+    expect(
+      () => new ResendEmailService(mockConfig({ EMAIL_FROM: 'no-reply@example.com' })),
+    ).toThrow();
   });
 });
 

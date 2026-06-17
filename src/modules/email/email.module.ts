@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EMAIL_SERVICE } from './email.constants';
 import { StalwartEmailService } from './providers/stalwart-email.service';
 import { MockEmailService } from './providers/mock-email.service';
+import { ResendEmailService } from './providers/resend-email.service';
 import { EmailController } from './email.controller';
 
 @Module({
@@ -18,8 +19,12 @@ import { EmailController } from './email.controller';
             return new MockEmailService();
           case 'stalwart':
             return new StalwartEmailService(config);
+          case 'resend':
+            return new ResendEmailService(config);
           default:
-            throw new Error(`Unknown EMAIL_PROVIDER "${provider}". Valid values: stalwart, mock`);
+            throw new Error(
+              `Unknown EMAIL_PROVIDER "${provider}". Valid values: stalwart, resend, mock`,
+            );
         }
       },
     },
