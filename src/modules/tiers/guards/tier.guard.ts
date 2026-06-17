@@ -5,6 +5,14 @@ import { REQUIRES_TIER_KEY } from '../decorators/requires-tier.decorator';
 import { Tier } from '../tier-limits.config';
 import { LimitsRepository } from '../limits.repository';
 
+/** Ordered ranking so a higher tier satisfies a lower requirement. */
+const TIER_RANK: Record<Tier, number> = { free: 0, essencial: 1, pro: 2 };
+
+function rankOf(tier: string): number {
+  if (tier === 'premium') return TIER_RANK.pro; // legacy alias
+  return TIER_RANK[tier as Tier] ?? TIER_RANK.free;
+}
+
 @Injectable()
 export class TierGuard implements CanActivate {
   constructor(
@@ -24,7 +32,7 @@ export class TierGuard implements CanActivate {
     if (!user) return true;
 
     const tier = await this.limitsRepository.getUserTier(user.id);
-    if (requiredTier === 'premium' && tier !== 'premium') {
+    if (rankOf(tier) < TIER_RANK[requiredTier]) {
       throw new ForbiddenException({
         code: 'TIER_REQUIRED',
         required_tier: requiredTier,

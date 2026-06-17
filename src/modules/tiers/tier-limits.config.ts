@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-export type Tier = 'free' | 'premium';
+export type Tier = 'free' | 'essencial' | 'pro';
 
 export interface TierLimits {
   maxLists: number;
@@ -9,9 +9,11 @@ export interface TierLimits {
   maxAiCallsPerMonth: number;
 }
 
-const DEFAULT_FREE_MAX_LISTS = 3;
-const DEFAULT_FREE_MAX_ITEMS = 50;
-const DEFAULT_FREE_MAX_AI_CALLS_PER_MONTH = 10;
+const DEFAULTS: Record<Tier, TierLimits> = {
+  free: { maxLists: 1, maxItems: 50, maxAiCallsPerMonth: 10 },
+  essencial: { maxLists: 3, maxItems: 70, maxAiCallsPerMonth: Infinity },
+  pro: { maxLists: 5, maxItems: 150, maxAiCallsPerMonth: Infinity },
+};
 
 function parseNonNegativeInt(raw: unknown, fallback: number): number {
   if (raw === undefined || raw === null || raw === '') return fallback;
@@ -26,22 +28,40 @@ export class TierLimitsConfig {
   constructor(config: ConfigService) {
     this.limits = {
       free: {
-        maxLists: parseNonNegativeInt(config.get('FREE_MAX_LISTS'), DEFAULT_FREE_MAX_LISTS),
-        maxItems: parseNonNegativeInt(config.get('FREE_MAX_ITEMS'), DEFAULT_FREE_MAX_ITEMS),
+        maxLists: parseNonNegativeInt(config.get('FREE_MAX_LISTS'), DEFAULTS.free.maxLists),
+        maxItems: parseNonNegativeInt(config.get('FREE_MAX_ITEMS'), DEFAULTS.free.maxItems),
         maxAiCallsPerMonth: parseNonNegativeInt(
           config.get('FREE_MAX_AI_CALLS_PER_MONTH'),
-          DEFAULT_FREE_MAX_AI_CALLS_PER_MONTH,
+          DEFAULTS.free.maxAiCallsPerMonth,
         ),
       },
-      premium: {
-        maxLists: Infinity,
-        maxItems: Infinity,
-        maxAiCallsPerMonth: Infinity,
+      essencial: {
+        maxLists: parseNonNegativeInt(
+          config.get('ESSENCIAL_MAX_LISTS'),
+          DEFAULTS.essencial.maxLists,
+        ),
+        maxItems: parseNonNegativeInt(
+          config.get('ESSENCIAL_MAX_ITEMS'),
+          DEFAULTS.essencial.maxItems,
+        ),
+        // AI is unlimited on paid tiers; no env override exposed.
+        maxAiCallsPerMonth: DEFAULTS.essencial.maxAiCallsPerMonth,
+      },
+      pro: {
+        maxLists: parseNonNegativeInt(config.get('PRO_MAX_LISTS'), DEFAULTS.pro.maxLists),
+        maxItems: parseNonNegativeInt(config.get('PRO_MAX_ITEMS'), DEFAULTS.pro.maxItems),
+        maxAiCallsPerMonth: DEFAULTS.pro.maxAiCallsPerMonth,
       },
     };
   }
 
+  /**
+   * Resolves limits for a tier string. Unknown tiers fall back to `free`.
+   * Legacy `premium` is aliased to `pro` (closest to the old unlimited tier).
+   */
   get(tier: string): TierLimits {
-    return tier === 'premium' ? this.limits.premium : this.limits.free;
+    if (tier === 'pro' || tier === 'premium') return this.limits.pro;
+    if (tier === 'essencial') return this.limits.essencial;
+    return this.limits.free;
   }
 }

@@ -42,7 +42,10 @@ describe('AiService', () => {
         AiService,
         {
           provide: ConfigService,
-          useValue: { getOrThrow: jest.fn().mockReturnValue('test-api-key') },
+          useValue: {
+            getOrThrow: jest.fn().mockReturnValue('test-api-key'),
+            get: jest.fn().mockReturnValue(undefined),
+          },
         },
         {
           provide: PrismaService,

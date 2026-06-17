@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { RevenueCatController } from './revenuecat.controller';
 import { RevenueCatService } from './revenuecat.service';
 
@@ -14,7 +15,10 @@ describe('RevenueCatController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RevenueCatController],
       providers: [{ provide: RevenueCatService, useValue: mockService }],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<RevenueCatController>(RevenueCatController);
     jest.clearAllMocks();

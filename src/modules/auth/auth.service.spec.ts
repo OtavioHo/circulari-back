@@ -94,6 +94,7 @@ describe('AuthService', () => {
         oauth_id: null,
         refresh_token_hash: null,
         tier: 'free',
+        tier_event_at: null,
         created_at: new Date(),
         password_reset_otp_hash: null,
         password_reset_otp_expires_at: null,

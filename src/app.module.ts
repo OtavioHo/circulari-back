@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,6 +20,10 @@ import { EmailModule } from './modules/email/email.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    // Rate-limit definitions are opt-in per route via @UseGuards(ThrottlerGuard)
+    // + @Throttle — registering the module here does not throttle anything global.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
     AuthModule,

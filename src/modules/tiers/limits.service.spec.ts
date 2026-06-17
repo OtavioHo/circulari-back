@@ -98,7 +98,7 @@ describe('LimitsService', () => {
     });
 
     it('skips count and runs create for premium (infinite cap)', async () => {
-      tx.user.findUnique.mockResolvedValue({ tier: 'premium' });
+      tx.user.findUnique.mockResolvedValue({ tier: 'pro' });
       tierConfig.get.mockReturnValue({
         maxLists: Infinity,
         maxItems: Infinity,
@@ -181,7 +181,7 @@ describe('LimitsService', () => {
     });
 
     it('returns false for premium (no reservation needed)', async () => {
-      repository.getUserTier.mockResolvedValue('premium');
+      repository.getUserTier.mockResolvedValue('pro');
       tierConfig.get.mockReturnValue({
         maxLists: Infinity,
         maxItems: Infinity,
@@ -230,7 +230,7 @@ describe('LimitsService', () => {
     });
 
     it('skips count for premium (infinite cap)', async () => {
-      repository.getUserTier.mockResolvedValue('premium');
+      repository.getUserTier.mockResolvedValue('pro');
       tierConfig.get.mockReturnValue({
         maxLists: Infinity,
         maxItems: Infinity,
@@ -260,7 +260,7 @@ describe('LimitsService', () => {
     });
 
     it('returns null max for all fields on premium tier', async () => {
-      repository.getUserTier.mockResolvedValue('premium');
+      repository.getUserTier.mockResolvedValue('pro');
       tierConfig.get.mockReturnValue({
         maxLists: Infinity,
         maxItems: Infinity,
@@ -271,7 +271,7 @@ describe('LimitsService', () => {
       const result = await service.getPlanUsage('user-1');
 
       expect(result).toEqual({
-        plan: 'premium',
+        plan: 'pro',
         lists: { used: 10, max: null },
         items: { used: 200, max: null },
         aiCalls: { used: 50, max: null },

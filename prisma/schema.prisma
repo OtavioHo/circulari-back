@@ -26,6 +26,7 @@ model User {
   oauth_id           String?
   refresh_token_hash               String?
   tier                             String    @default("free")
+  tier_event_at                    DateTime?
   password_reset_otp_hash          String?
   password_reset_otp_expires_at    DateTime?
   password_reset_token_hash        String?
