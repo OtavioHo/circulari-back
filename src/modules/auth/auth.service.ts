@@ -15,6 +15,7 @@ import { Prisma } from '../../generated/prisma/client';
 import { AuthRepository } from './auth.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RevenueCatService } from '../revenuecat/revenuecat.service';
 import { EMAIL_SERVICE } from '../email/email.constants';
 import { IEmailService } from '../email/email.interface';
@@ -65,6 +66,26 @@ export class AuthService {
   async getMe(userId: string) {
     const user = await this.repository.findById(userId);
     if (!user) throw new ForbiddenException('User not found');
+    return { id: user.id, email: user.email, name: user.name };
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const name = dto.name?.trim();
+    // Nothing to change (empty payload, or whitespace-only name) → no-op.
+    if (!name) {
+      return this.getMe(userId);
+    }
+    let user: Awaited<ReturnType<typeof this.repository.updateProfile>>;
+    try {
+      user = await this.repository.updateProfile(userId, { name });
+    } catch (err) {
+      // A valid token for a since-deleted user hits P2025 (record not found).
+      // Mirror getMe so both paths surface a 403 instead of a 500.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new ForbiddenException('User not found');
+      }
+      throw err;
+    }
     return { id: user.id, email: user.email, name: user.name };
   }
 

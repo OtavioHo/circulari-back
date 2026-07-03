@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '../../generated/prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -34,6 +35,7 @@ describe('AuthService', () => {
             storeOtp: jest.fn(),
             clearOtpStoreResetToken: jest.fn(),
             updatePasswordAndClearReset: jest.fn(),
+            updateProfile: jest.fn(),
           },
         },
         {
@@ -418,6 +420,72 @@ describe('AuthService', () => {
 
       await expect(service.resetPassword(email, randomUUID(), 'NewPass1!')).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update the name and return the fresh profile', async () => {
+      repository.updateProfile.mockResolvedValue({
+        id: 'uuid-1',
+        email: 'test@example.com',
+        name: 'Updated',
+      } as any);
+
+      const result = await service.updateProfile('uuid-1', { name: 'Updated' });
+
+      expect(repository.updateProfile).toHaveBeenCalledWith('uuid-1', { name: 'Updated' });
+      expect(result).toEqual({ id: 'uuid-1', email: 'test@example.com', name: 'Updated' });
+    });
+
+    it('should trim the name before persisting', async () => {
+      repository.updateProfile.mockResolvedValue({
+        id: 'uuid-1',
+        email: 'test@example.com',
+        name: 'Updated',
+      } as any);
+
+      await service.updateProfile('uuid-1', { name: '  Updated  ' });
+
+      expect(repository.updateProfile).toHaveBeenCalledWith('uuid-1', { name: 'Updated' });
+    });
+
+    it('should no-op and return current profile when no name is provided', async () => {
+      repository.findById.mockResolvedValue({
+        id: 'uuid-1',
+        email: 'test@example.com',
+        name: 'Test',
+      } as any);
+
+      const result = await service.updateProfile('uuid-1', {});
+
+      expect(repository.updateProfile).not.toHaveBeenCalled();
+      expect(repository.findById).toHaveBeenCalledWith('uuid-1');
+      expect(result).toEqual({ id: 'uuid-1', email: 'test@example.com', name: 'Test' });
+    });
+
+    it('should no-op when the name is whitespace only', async () => {
+      repository.findById.mockResolvedValue({
+        id: 'uuid-1',
+        email: 'test@example.com',
+        name: 'Test',
+      } as any);
+
+      await service.updateProfile('uuid-1', { name: '   ' });
+
+      expect(repository.updateProfile).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when the user no longer exists (P2025)', async () => {
+      repository.updateProfile.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record not found', {
+          code: 'P2025',
+          clientVersion: 'test',
+        }),
+      );
+
+      await expect(service.updateProfile('uuid-1', { name: 'Updated' })).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });

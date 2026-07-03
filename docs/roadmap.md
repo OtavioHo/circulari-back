@@ -7,6 +7,7 @@
 - [x] `POST /auth/register`
 - [x] `POST /auth/login`
 - [x] Password reset via 6-digit OTP email (`POST /auth/forgot-password`, `POST /auth/verify-reset-otp`, `POST /auth/reset-password`)
+- [x] Profile read + update (`GET /auth/me`, `PATCH /auth/me`)
 - [ ] `POST /auth/social` (Google + Apple)
 - [x] JWT middleware
 

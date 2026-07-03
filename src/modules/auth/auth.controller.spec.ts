@@ -14,6 +14,8 @@ describe('AuthController', () => {
     login: jest.fn(),
     refresh: jest.fn(),
     logout: jest.fn(),
+    getMe: jest.fn(),
+    updateProfile: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -105,6 +107,25 @@ describe('AuthController', () => {
 
     it('is NOT marked @Public so JwtAuthGuard protects it', () => {
       const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, AuthController.prototype.logout);
+      expect(isPublic).toBeUndefined();
+    });
+  });
+
+  describe('updateMe', () => {
+    it('extracts id from req.user and delegates to authService.updateProfile', async () => {
+      const req = { user: { id: 'uid-1' } } as any;
+      const dto = { name: 'New Name' };
+      const expected = { id: 'uid-1', email: 'a@b.com', name: 'New Name' };
+      mockAuthService.updateProfile.mockResolvedValue(expected);
+
+      const result = await controller.updateMe(dto, req);
+
+      expect(mockAuthService.updateProfile).toHaveBeenCalledWith('uid-1', dto);
+      expect(result).toBe(expected);
+    });
+
+    it('is NOT marked @Public so JwtAuthGuard protects it', () => {
+      const isPublic = Reflect.getMetadata(IS_PUBLIC_KEY, AuthController.prototype.updateMe);
       expect(isPublic).toBeUndefined();
     });
   });
