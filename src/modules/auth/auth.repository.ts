@@ -18,6 +18,10 @@ export class AuthRepository {
     return this.prisma.user.create({ data });
   }
 
+  async updateProfile(userId: string, data: { name?: string }) {
+    return this.prisma.user.update({ where: { id: userId }, data });
+  }
+
   async updateRefreshTokenHash(userId: string, hash: string | null) {
     return this.prisma.user.update({
       where: { id: userId },

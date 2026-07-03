@@ -1,10 +1,21 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, UseGuards, Req, Body } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyResetOtpDto } from './dto/verify-reset-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
 import { Request } from 'express';
@@ -17,6 +28,12 @@ export class AuthController {
   async getMe(@Req() req: Request) {
     const user = req.user as { id: string };
     return this.authService.getMe(user.id);
+  }
+
+  @Patch('me')
+  async updateMe(@Body() dto: UpdateProfileDto, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.authService.updateProfile(user.id, dto);
   }
 
   @Public()
