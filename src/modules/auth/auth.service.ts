@@ -75,7 +75,17 @@ export class AuthService {
     if (!name) {
       return this.getMe(userId);
     }
-    const user = await this.repository.updateProfile(userId, { name });
+    let user: Awaited<ReturnType<typeof this.repository.updateProfile>>;
+    try {
+      user = await this.repository.updateProfile(userId, { name });
+    } catch (err) {
+      // A valid token for a since-deleted user hits P2025 (record not found).
+      // Mirror getMe so both paths surface a 403 instead of a 500.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new ForbiddenException('User not found');
+      }
+      throw err;
+    }
     return { id: user.id, email: user.email, name: user.name };
   }
 

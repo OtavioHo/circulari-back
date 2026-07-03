@@ -13,6 +13,8 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 | POST | /auth/login | Returns JWT + refresh token |
 | POST | /auth/refresh | Exchange refresh token for new token pair |
 | POST | /auth/logout | Invalidate refresh token |
+| GET | /auth/me | Current user's profile |
+| PATCH | /auth/me | Update current user's profile (name) |
 | POST | /auth/forgot-password | Request a 6-digit OTP to reset password |
 | POST | /auth/verify-reset-otp | Verify OTP, receive a short-lived reset token |
 | POST | /auth/reset-password | Reset password using the reset token |
@@ -39,6 +41,16 @@ Auth: `Authorization: Bearer <jwt>` required on all routes except `/auth/registe
 
 // POST /auth/logout — response 200 (requires Authorization header)
 { "message": "Logged out" }
+
+// GET /auth/me — response 200 (requires Authorization header)
+{ "id": "uuid", "email": "string", "name": "string" }
+
+// PATCH /auth/me — request (requires Authorization header)
+{ "name": "string (1–120 chars)" }
+// All fields optional; an empty/whitespace-only payload is a no-op that returns the current profile.
+
+// PATCH /auth/me — response 200
+{ "id": "uuid", "email": "string", "name": "string" }
 
 // POST /auth/forgot-password — request (always returns 200: email not found, rate-limited, or email send failure are all silent)
 { "email": "string" }

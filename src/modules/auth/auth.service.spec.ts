@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '../../generated/prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -473,6 +474,19 @@ describe('AuthService', () => {
       await service.updateProfile('uuid-1', { name: '   ' });
 
       expect(repository.updateProfile).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when the user no longer exists (P2025)', async () => {
+      repository.updateProfile.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record not found', {
+          code: 'P2025',
+          clientVersion: 'test',
+        }),
+      );
+
+      await expect(service.updateProfile('uuid-1', { name: 'Updated' })).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });
