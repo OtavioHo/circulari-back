@@ -2,17 +2,32 @@
 
 ## Model
 
-OpenAI Vision — **GPT-4o** by default. Configurable via the `OPENAI_VISION_MODEL`
-env var (any vision-capable OpenAI model). Images are sent with `detail: "high"`
-for more reliable item recognition.
+**Primary — Google Gemini with Google Search grounding.** `gemini-3-flash-preview`
+by default (configurable via `GEMINI_MODEL`; must support grounding + structured
+output). A single `generateContent` call does vision + web search + structured
+JSON, so the price is **anchored to real Brazilian second-hand listings** (Mercado
+Livre / OLX / Enjoei) rather than being an ungrounded guess. Uses the native
+`@google/genai` SDK.
+
+**Fallback — OpenAI Vision** (`gpt-4o` by default, `OPENAI_VISION_MODEL`). Used
+whenever the grounded call fails **or comes back ungrounded** (see
+[Grounding & Fallback](#grounding-fallback)). Its prices come from training
+knowledge only, so results on this path are always marked `price_confidence: "low"`.
+
+> **Billing:** Gemini grounding requires a **billing-enabled project with a
+> non-zero prepay balance** — it returns `429` on the free tier. See
+> [infra](./infra) for the `GEMINI_API_KEY` / `OPENAI_API_KEY` secrets.
 
 ## Flow
 
 ```
 POST /ai/analyze (image)
   └─► DB: fetch all categories (id, name)
-        └─► OpenAI Vision API (prompt includes category list)
-              └─► Returns { name, category, description, price_min, price_max }
+        └─► Gemini: generateContent(image + googleSearch + responseJsonSchema)   ← grounded, single call
+              │      Returns { name, category, description, price_min, price_max,
+              │                price_confidence, price_evidence[] } + groundingMetadata
+              ├─ grounded (web_search_queries > 0) ─► use result
+              └─ error OR ungrounded ─► OpenAI Vision fallback (price_confidence forced "low")
                     └─► Backend resolves category_id (case-insensitive match)
                           └─► Backend normalizes prices
                                 └─► Returns suggestions to client
@@ -29,20 +44,54 @@ AI is a **separate step** before item creation. The client sends the image to `/
 
 A **system prompt** frames the model as an appraiser of second-hand goods for a
 Brazilian marketplace, instructing it to judge visible condition and price the
-item against the realistic used-goods market in BRL.
+item against the realistic used-goods market in BRL. The Gemini system prompt
+additionally tells it to **anchor the price to real used listings found via search**.
 
 A **user prompt** (built dynamically with the current category list injected at
 call time) asks for the item name, best-matching category (or null), a pt-BR
 description including condition, and a sensible second-hand `price_min`/`price_max`
-range.
+range. The **Gemini prompt** adds a **single-search instruction** ("run ONE focused
+web search … do NOT run multiple") — this keeps the model to ~1 search query per
+analysis, which is materially cheaper (Gemini 3 bills per search query) while
+staying reliably grounded.
 
 ### Structured Outputs
 
-The response shape is enforced with OpenAI **Structured Outputs**
-(`response_format: json_schema`, `strict: true`) rather than free-form JSON, so
-the returned fields can't drift. When categories exist, `category` is constrained
-to an `enum` of the valid names (plus `null`), pushing the model to pick a real
-category. Fields: `name`, `category`, `description`, `price_min`, `price_max`.
+Both providers enforce the response shape with structured output rather than
+free-form JSON, so the returned fields can't drift.
+
+- **Gemini** uses `responseMimeType: 'application/json'` + `responseJsonSchema`.
+  Its schema subset requires `nullable: true` (not `type: ['string','null']`) and
+  no `null` enum member. Fields: `name`, `category`, `description`, `price_min`,
+  `price_max`, **`price_confidence`**, **`price_evidence[]`**.
+- **OpenAI** (fallback) uses **Structured Outputs** (`response_format: json_schema`,
+  `strict: true`). Fields: `name`, `category`, `description`, `price_min`,
+  `price_max` (no confidence/evidence — set by the backend).
+
+When categories exist, `category` is constrained to an `enum` of the valid names,
+pushing the model to pick a real category.
+
+## Grounding & Fallback
+
+The trust signal is **derived from grounding metadata, not the model's
+self-report**: a grounded response has `groundingMetadata.web_search_queries.length > 0`.
+The model's own `price_confidence` is not trusted on its own — a model can return
+`"medium"` while having skipped search entirely.
+
+- **Grounded** (search queries present): use the Gemini result, keeping its
+  `price_confidence` (default `"medium"` if omitted) and best-effort `price_evidence`.
+- **Ungrounded or errored**: fall back to the OpenAI vision call and force
+  `price_confidence: "low"` with empty `price_evidence`.
+- **Both fail**: return `503` — client handles fallback (manual entry).
+
+`price_evidence` is **best-effort**: comparable listings the price was anchored to,
+`[{ title, price, url }]`. URLs from the model can be approximate, so treat it as a
+display nicety, not guaranteed-clickable citations. It is always empty on the
+fallback path.
+
+**Timeout:** the Gemini client uses a **60s** timeout (grounded Flash calls measured
+9–37s); the OpenAI fallback keeps its 30s timeout. The `POST /ai/analyze` flow stays
+synchronous.
 
 ## Category Matching
 
@@ -53,6 +102,6 @@ After the AI returns a category name, the backend resolves `category_id`:
 
 ## Price Normalization
 
-After receiving AI response:
+After receiving the AI response:
 1. Swap `price_min` and `price_max` if out of order (`price_min > price_max`)
-2. If AI fails, return error — client handles fallback (manual entry)
+2. If both providers fail, return error — client handles fallback (manual entry)
