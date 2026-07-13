@@ -182,7 +182,14 @@ interface RawAnalysis {
 }
 
 function toNumber(value: unknown): number {
-  return typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    // Number('') and Number('   ') are 0 (finite) — reject empty input so a
+    // missing price can't slip through as R$0.
+    const trimmed = value.trim();
+    return trimmed === '' ? NaN : Number(trimmed);
+  }
+  return NaN;
 }
 
 // Validate + normalize the core fields both providers must return. Throws on a
@@ -201,7 +208,14 @@ function validateCore(
   const price_min = toNumber(parsed.price_min);
   const price_max = toNumber(parsed.price_max);
 
-  if (!name || !description || !isFinite(price_min) || !isFinite(price_max)) {
+  if (
+    !name ||
+    !description ||
+    !isFinite(price_min) ||
+    !isFinite(price_max) ||
+    price_min < 0 ||
+    price_max < 0
+  ) {
     throw new Error(`Invalid AI response shape: ${JSON.stringify(parsed)}`);
   }
   return { name, category, description, price_min, price_max };
@@ -219,7 +233,7 @@ function parseEvidence(value: unknown): PriceEvidence[] {
     const title = typeof e.title === 'string' ? e.title.trim() : '';
     const url = typeof e.url === 'string' ? e.url.trim() : '';
     const price = toNumber(e.price);
-    if (!title || !url || !isFinite(price)) return [];
+    if (!title || !url || !isFinite(price) || price < 0) return [];
     return [{ title, price, url }];
   });
 }
@@ -227,7 +241,9 @@ function parseEvidence(value: unknown): PriceEvidence[] {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly genai: GoogleGenAI;
+  // null when GEMINI_API_KEY is unset — the service degrades to OpenAI-only
+  // rather than failing to boot.
+  private readonly genai: GoogleGenAI | null;
   private readonly openai: OpenAI;
   private readonly geminiModel: string;
   private readonly openaiModel: string;
@@ -237,12 +253,17 @@ export class AiService {
     private readonly prisma: PrismaService,
     private readonly limits: LimitsService,
   ) {
-    // 60s client-wide timeout: grounded Flash calls measured 9-37s; the old 30s
-    // would time out under load.
-    this.genai = new GoogleGenAI({
-      apiKey: this.config.getOrThrow<string>('GEMINI_API_KEY'),
-      httpOptions: { timeout: 60_000 },
-    });
+    // Gemini (grounded) is the primary path but optional: without a key the
+    // service degrades to the ungrounded OpenAI path instead of crashing the
+    // whole app on boot. 45s timeout bounds the synchronous request (grounded
+    // Flash calls measured 9-37s) while leaving room for the fallback below.
+    const geminiApiKey = this.config.get<string>('GEMINI_API_KEY');
+    this.genai = geminiApiKey
+      ? new GoogleGenAI({ apiKey: geminiApiKey, httpOptions: { timeout: 45_000 } })
+      : null;
+    if (!this.genai) {
+      this.logger.warn('GEMINI_API_KEY not set — grounded pricing disabled, using OpenAI only');
+    }
     this.geminiModel = this.config.get<string>('GEMINI_MODEL') ?? 'gemini-3-flash-preview';
 
     this.openai = new OpenAI({
@@ -292,23 +313,22 @@ export class AiService {
 
     const categoryNames = categories.map((c) => c.name);
 
-    // Primary: grounded Gemini. On any failure — including an ungrounded
-    // response (no search queries) — fall back to the ungrounded OpenAI call so
-    // the request still succeeds (graceful degradation).
+    // Primary: grounded Gemini (when configured). On any failure — including an
+    // ungrounded response (no search queries) — fall back to the ungrounded
+    // OpenAI call so the request still succeeds (graceful degradation).
     let raw: RawAnalysis;
-    try {
-      raw = await this.analyzeWithGemini(imageBuffer, mimetype, categoryNames);
-    } catch (geminiErr) {
-      const message = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
-      this.logger.warn(`Gemini grounded analysis unavailable, falling back to OpenAI: ${message}`);
+    if (this.genai) {
       try {
-        raw = await this.analyzeWithOpenAI(imageBuffer, mimetype, categoryNames);
-      } catch (openaiErr) {
-        const trace =
-          openaiErr instanceof Error ? (openaiErr.stack ?? openaiErr.message) : String(openaiErr);
-        this.logger.error('AI analysis failed (both providers)', trace);
-        throw new ServiceUnavailableException('AI analysis failed');
+        raw = await this.analyzeWithGemini(imageBuffer, mimetype, categoryNames);
+      } catch (geminiErr) {
+        const message = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+        this.logger.warn(
+          `Gemini grounded analysis unavailable, falling back to OpenAI: ${message}`,
+        );
+        raw = await this.runOpenAiFallback(imageBuffer, mimetype, categoryNames);
       }
+    } else {
+      raw = await this.runOpenAiFallback(imageBuffer, mimetype, categoryNames);
     }
 
     const matched = raw.category
@@ -333,6 +353,23 @@ export class AiService {
     return result;
   }
 
+  // Runs the OpenAI fallback and maps any failure to a 503 — this is the last
+  // resort, so if it also fails the whole analysis fails.
+  private async runOpenAiFallback(
+    imageBuffer: Buffer,
+    mimetype: string,
+    categoryNames: string[],
+  ): Promise<RawAnalysis> {
+    try {
+      return await this.analyzeWithOpenAI(imageBuffer, mimetype, categoryNames);
+    } catch (openaiErr) {
+      const trace =
+        openaiErr instanceof Error ? (openaiErr.stack ?? openaiErr.message) : String(openaiErr);
+      this.logger.error('AI analysis failed (OpenAI fallback)', trace);
+      throw new ServiceUnavailableException('AI analysis failed');
+    }
+  }
+
   // Grounded path: one generateContent call does vision + Google Search + JSON.
   // Throws if the model returned no search queries — an ungrounded price is no
   // better than the fallback, so we don't trust it (and the model's self-reported
@@ -342,7 +379,12 @@ export class AiService {
     mimetype: string,
     categoryNames: string[],
   ): Promise<RawAnalysis> {
-    const response = await this.genai.models.generateContent({
+    // Guarded by the caller, but keep the null-check local so the type narrows.
+    const genai = this.genai;
+    if (!genai) {
+      throw new Error('Gemini client not configured');
+    }
+    const response = await genai.models.generateContent({
       model: this.geminiModel,
       contents: [
         {
@@ -359,7 +401,9 @@ export class AiService {
         responseMimeType: 'application/json',
         responseJsonSchema: buildGeminiSchema(categoryNames),
         temperature: 0,
-        maxOutputTokens: 1500,
+        // Visible JSON output measured ~300-400 tokens; 2048 leaves ample
+        // headroom for a populated price_evidence array without truncation.
+        maxOutputTokens: 2048,
       },
     });
 
@@ -416,7 +460,9 @@ export class AiService {
         },
         temperature: 0,
       },
-      { timeout: 30_000 },
+      // 20s: this runs after the 45s Gemini attempt, so keep the combined
+      // worst case (~65s) under typical gateway/client request timeouts.
+      { timeout: 20_000 },
     );
 
     const raw = response.choices[0]?.message?.content ?? '';

@@ -54,7 +54,11 @@ describe('AiService', () => {
           provide: ConfigService,
           useValue: {
             getOrThrow: jest.fn().mockReturnValue('test-api-key'),
-            get: jest.fn().mockReturnValue(undefined),
+            // GEMINI_API_KEY present -> grounded path enabled; other optional
+            // keys fall through to their defaults.
+            get: jest.fn((key: string) =>
+              key === 'GEMINI_API_KEY' ? 'test-gemini-key' : undefined,
+            ),
           },
         },
         {
@@ -251,6 +255,73 @@ describe('AiService', () => {
       expect(result.price_confidence).toBe('low');
     });
 
+    it('falls back to OpenAI when the grounded response has an invalid (negative) price', async () => {
+      mockGenerate.mockResolvedValue(
+        makeGeminiResponse({ ...geminiPayload, price_min: -10, price_max: 50 }),
+      );
+      mockCreate.mockResolvedValue(
+        makeOpenAIResponse(
+          JSON.stringify({
+            name: 'Item',
+            category: null,
+            description: 'Descrição.',
+            price_min: 10,
+            price_max: 50,
+          }),
+        ),
+      );
+
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
+
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(result.price_confidence).toBe('low');
+      expect(result.price_min).toBe(10);
+    });
+
+    it('falls back to OpenAI when the grounded response has an empty-string price', async () => {
+      mockGenerate.mockResolvedValue(
+        makeGeminiResponse({ ...geminiPayload, price_min: '', price_max: 50 }),
+      );
+      mockCreate.mockResolvedValue(
+        makeOpenAIResponse(
+          JSON.stringify({
+            name: 'Item',
+            category: null,
+            description: 'Descrição.',
+            price_min: 10,
+            price_max: 50,
+          }),
+        ),
+      );
+
+      const result = await service.analyze(fakeUserId, fakeBuffer, fakeMime);
+
+      // Number('') is 0 (finite) — the guard must reject it, not surface R$0.
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(result.price_min).toBe(10);
+    });
+
+    it('includes the category list in the OpenAI fallback prompt', async () => {
+      mockGenerate.mockRejectedValue(new Error('Gemini 500'));
+      mockCreate.mockResolvedValue(
+        makeOpenAIResponse(
+          JSON.stringify({
+            name: 'Notebook',
+            category: 'Eletrônicos',
+            description: 'Um notebook.',
+            price_min: 2000,
+            price_max: 5000,
+          }),
+        ),
+      );
+
+      await service.analyze(fakeUserId, fakeBuffer, fakeMime);
+
+      const promptText = mockCreate.mock.calls[0][0].messages[1].content[0].text as string;
+      expect(promptText).toContain('Eletrônicos');
+      expect(promptText).toContain('Móveis');
+    });
+
     it('throws ServiceUnavailableException when both providers fail', async () => {
       mockGenerate.mockRejectedValue(new Error('Gemini down'));
       mockCreate.mockRejectedValue(new Error('OpenAI down'));
@@ -312,6 +383,49 @@ describe('AiService', () => {
       expect(mockGenerate).not.toHaveBeenCalled();
       expect(mockCreate).not.toHaveBeenCalled();
       expect(limits.releaseAiReservation).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('without GEMINI_API_KEY (grounded pricing disabled)', () => {
+    let openAiOnlyService: AiService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AiService,
+          {
+            provide: ConfigService,
+            useValue: {
+              getOrThrow: jest.fn().mockReturnValue('test-api-key'),
+              get: jest.fn().mockReturnValue(undefined), // no GEMINI_API_KEY
+            },
+          },
+          { provide: PrismaService, useValue: prisma },
+          { provide: LimitsService, useValue: limits },
+        ],
+      }).compile();
+      openAiOnlyService = module.get<AiService>(AiService);
+    });
+
+    it('uses OpenAI directly and never calls Gemini', async () => {
+      mockCreate.mockResolvedValue(
+        makeOpenAIResponse(
+          JSON.stringify({
+            name: 'Notebook',
+            category: 'Eletrônicos',
+            description: 'Um notebook.',
+            price_min: 2000,
+            price_max: 5000,
+          }),
+        ),
+      );
+
+      const result = await openAiOnlyService.analyze(fakeUserId, fakeBuffer, fakeMime);
+
+      expect(mockGenerate).not.toHaveBeenCalled();
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(result.name).toBe('Notebook');
+      expect(result.price_confidence).toBe('low');
     });
   });
 });

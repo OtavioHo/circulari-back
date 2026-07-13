@@ -25,7 +25,7 @@ The backend runs on **Google Cloud Platform** (region `southamerica-east1` / Sã
 | `JWT_EXPIRES_IN` | Access token expiry (default: `15m`) |
 | `JWT_REFRESH_SECRET` | Secret for signing refresh tokens |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry (default: `7d`) |
-| `GEMINI_API_KEY` | Gemini API key (primary AI; grounded pricing — needs a billing-enabled project) |
+| `GEMINI_API_KEY` | Gemini API key (primary AI; grounded pricing — needs a billing-enabled project). Optional: if unset, AI falls back to OpenAI only |
 | `GEMINI_MODEL` | Gemini model (default: `gemini-3-flash-preview`) |
 | `OPENAI_API_KEY` | OpenAI API key (ungrounded AI fallback) |
 | `STORAGE_PROVIDER` | `s3`, `r2`, or `minio` |

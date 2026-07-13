@@ -10,9 +10,10 @@ Livre / OLX / Enjoei) rather than being an ungrounded guess. Uses the native
 `@google/genai` SDK.
 
 **Fallback — OpenAI Vision** (`gpt-4o` by default, `OPENAI_VISION_MODEL`). Used
-whenever the grounded call fails **or comes back ungrounded** (see
-[Grounding & Fallback](#grounding-fallback)). Its prices come from training
-knowledge only, so results on this path are always marked `price_confidence: "low"`.
+whenever the grounded call fails, **comes back ungrounded**, or **`GEMINI_API_KEY`
+is unset** (grounded pricing is optional — without a key the service degrades to
+OpenAI-only rather than failing to boot). Its prices come from training knowledge
+only, so results on this path are always marked `price_confidence: "low"`.
 
 > **Billing:** Gemini grounding requires a **billing-enabled project with a
 > non-zero prepay balance** — it returns `429` on the free tier. See
@@ -89,9 +90,10 @@ The model's own `price_confidence` is not trusted on its own — a model can ret
 display nicety, not guaranteed-clickable citations. It is always empty on the
 fallback path.
 
-**Timeout:** the Gemini client uses a **60s** timeout (grounded Flash calls measured
-9–37s); the OpenAI fallback keeps its 30s timeout. The `POST /ai/analyze` flow stays
-synchronous.
+**Timeout:** the Gemini client uses a **45s** timeout (grounded Flash calls measured
+9–37s); the OpenAI fallback uses **20s**. Because the fallback runs after a failed
+Gemini attempt, this bounds the combined worst case at ~65s — under typical
+gateway/client request timeouts. The `POST /ai/analyze` flow stays synchronous.
 
 ## Category Matching
 
